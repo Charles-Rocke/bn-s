@@ -82,4 +82,5 @@ def handler_generate_registration_options(request):
     print("TYPE OPTS: ", type(opts))
     #convert string to  object
     json_opts = json.loads(opts)
-    return json_opts
+    print(json_opts)
+    return HttpResponse(json_opts)
