@@ -52,7 +52,7 @@
         // @simplewebauthn/server -> generateRegistrationOptions()
         const resp = await fetch('api/generate-registration-options/');
         // what is the response
-        console.log(resp);
+        console.log("RESPONSE...: ",resp);
         let attResp;
         try {
           // Pass the options to the authenticator and wait for a response
