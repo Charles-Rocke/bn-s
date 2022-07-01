@@ -2,7 +2,10 @@ from django.shortcuts import render
 from rest_framework.generics import ListAPIView
 from users.models import User
 from .serializers import UserSerializer
-from django.http import HttpResponse
+# bn-s
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+# bn-s
 import base64
 import json
 import uuid
@@ -31,15 +34,16 @@ from webauthn.helpers.cose import COSEAlgorithmIdentifier
 from users.models import Credential, UserAccount
 from typing import Dict
 
-RP_ID = 'http://127.0.0.1:8000/'
-RP_NAME = 'localhost'
+RP_ID = 'bn-s.charles-rocke.repl.co'
+RP_NAME = 'charles-rocke'
 username = "johndoe@doe.com"
 
 # Create your views here.
 class RegisterAPIView(ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    
+
+@api_view()
 def handler_generate_registration_options(request):
     user_id = str(uuid.uuid4())
     print("got user id")
@@ -83,4 +87,4 @@ def handler_generate_registration_options(request):
     #convert string to  object
     json_opts = json.loads(opts)
     print(json_opts)
-    return HttpResponse(json_opts)
+    return Response(json_opts)
