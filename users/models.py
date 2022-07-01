@@ -24,4 +24,10 @@ class User(models.Model):
     
     def __str__(self):
         return self.username
-	
+
+# table for user credentials
+class Credentials(models.model):
+	id = models.BinaryField()
+	public_key = models.BinaryField()
+	sign_count = models.IntegerField()
+	transports: Optional[List[AuthenticatorTransport]] = None

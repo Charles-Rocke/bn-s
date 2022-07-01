@@ -6,7 +6,6 @@ from .serializers import UserSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 # bn-s
-from django.http import HttpResponse, JsonResponse
 import base64
 import json
 import uuid
