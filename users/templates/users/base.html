@@ -70,17 +70,16 @@
     
         // POST the response to the endpoint that calls
         // @simplewebauthn/server -> verifyRegistrationResponse()
-        const verificationResp = await fetch('/verify-registration', {
+        const verificationResp = await fetch('api/verify-registration-response/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(attResp),
         });
-    
         // Wait for the results of verification
         const verificationJSON = await verificationResp.json();
-    
+		  console.log("GOT VERIFICATION_JSON: ", verificationJSON)
         // Show UI appropriate for the `verified` status
         if (verificationJSON && verificationJSON.verified) {
           elemSuccess.innerHTML = 'Success!';
