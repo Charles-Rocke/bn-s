@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework.generics import ListAPIView
+from django.http import JsonResponse
 # bn-s
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -34,9 +35,10 @@ from webauthn.helpers.cose import COSEAlgorithmIdentifier
 from users.models import Credential, UserAccount, Users, UserCredential
 from typing import Dict
 
+print("Hello World")
 RP_ID = 'bn-s.charles-rocke.repl.co'
 RP_NAME = 'charles-rocke'
-username = "hndoe@doe.com"
+username = "vv@doe.com"
 origin = "https://bn-s.charles-rocke.repl.co"
 # A simple way to persist credentials by user ID
 global in_memory_db
@@ -45,6 +47,7 @@ in_memory_db: Dict[str, UserAccount] = {}
 # Create your views here
 @api_view()
 def handler_generate_registration_options(request):
+	print("hello world")
 	global current_registration_challenge
 	global logged_in_user_id
 	# create a unique user id
@@ -66,8 +69,10 @@ def handler_generate_registration_options(request):
 	
 	# initialize new user
 	new_user = Users(id = in_memory_db[user_id].id, username = in_memory_db[user_id].username)
+	# save new user 
 	new_user.save()
 	users = Users.objects.all()
+	
 	print("CURRENT USERS: ", users)
 	# generate registration options
 	options = generate_registration_options(
@@ -93,6 +98,7 @@ def handler_generate_registration_options(request):
 	opts = options_to_json(options)
     #convert string to  object
 	json_opts = json.loads(opts)
+	print("REGISTRATION_OPTS TYPE: ",type(Response(json_opts)))
 	return Response(json_opts)
 
 # add user to local database for later authentication
@@ -134,5 +140,84 @@ def handler_verify_registration_response(request):
 	    cred_opts = options_to_json(credential)
 	    #convert string to  object
 	    json_opts = json.loads(cred_opts)
+	    print("VERIFICATION_REG_OPTS TYPE: ",type(Response(json_opts)))
 	    return Response(json_opts)
+
+		
+# login methods
+@api_view()
+def handler_generate_authentication_options(requests):
+	global current_authentication_challenge
+	global logged_in_user_id
+
+	user = in_memory_db[logged_in_user_id]
+
+	options = generate_authentication_options(
+        rp_id=RP_ID,
+        allow_credentials=[{
+            "type": "public-key",
+            "id": cred.id,
+            "transports": cred.transports
+        } for cred in user.credentials],
+        user_verification=UserVerificationRequirement.REQUIRED,
+    )
+
+	current_authentication_challenge = options.challenge
+
+	opts = options_to_json(options)
+    #convert string to  object
+	json_opts = json.loads(opts)
+	print()
+	print("VERIFICATION_OPTS: ", json_opts)
+	print("VERIFICATION_OPTS TYPE: ",type(Response(json_opts)))
+	return Response(json_opts)
+
 	
+# verify authentication response
+@api_view(['GET', "POST"])
+def hander_verify_authentication_response(request):
+	if request.method == "POST":
+	    print(request.method)
+	    global current_registration_challenge
+	    global logged_in_user_id
+
+		# get the request body
+	    body = request.body
+	    print("25%")
+	    try:
+		    credential = AuthenticationCredential.parse_raw(body)
+	
+	        # Find the user's corresponding public key
+		    user = in_memory_db[logged_in_user_id]
+		    user_credential = None
+		    for _cred in user.credentials:
+			    if _cred.id == credential.raw_id:
+				    user_credential = _cred
+	
+		    if user_credential is None:
+			    raise Exception("Could not find corresponding public key in DB")
+		    print("50%")
+	        # Verify the assertion
+		    verification = verify_authentication_response(
+	            credential=credential,
+	            expected_challenge=current_authentication_challenge,
+	            expected_rp_id=RP_ID,
+	            expected_origin=origin,
+	            credential_public_key=user_credential.public_key,
+	            credential_current_sign_count=user_credential.sign_count,
+	            require_user_verification=True,
+	        )
+	    except Exception as err:
+		     return {"verified": False, "msg": str(err), "status": 400}
+	
+	    # Update our credential's sign count to what the authenticator says it is now
+	    user_credential.sign_count = verification.new_sign_count
+	    print("75%")
+	    opts = options_to_json(verification)
+	    print(opts)
+	    print(type(opts))
+	    #convert string to  object
+	    json_opts = json.loads(opts)
+	    print("100%")
+	    print(type(Response(json_opts)))
+	    return Response(json_opts)
