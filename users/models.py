@@ -18,6 +18,7 @@ class Credential:
 	    self.sign_count = sign_count
 	    self.tansports = transports
 
+		
 # UserAccount
 @dataclass
 class UserAccount:
@@ -30,12 +31,7 @@ class UserAccount:
 	    self.username = username
 	    self.credentials = credentials
 
-# specific user credential
-class UserCredential(models.Model):
-	credential_id = models.TextField()
-	public_key = models.TextField()
-	sign_count = models.PositiveBigIntegerField()
-	transports = models.CharField(max_length=20)
+		
 
 # specific user
 class Users(models.Model):
@@ -44,3 +40,12 @@ class Users(models.Model):
 
 	def __str__(self):
 		return self.username
+
+# specific user credential
+class UserCredential(models.Model):
+	id = models.BinaryField(primary_key = True, unique = True)
+	credential_id = models.BinaryField()
+	public_key = models.BinaryField()
+	sign_count = models.PositiveBigIntegerField()
+	transports = models.CharField(max_length=20)
+	user = models.ForeignKey(Users, on_delete=models.CASCADE)

@@ -1,15 +1,10 @@
-from django.shortcuts import render
-from rest_framework.generics import ListAPIView
-from django.http import JsonResponse
 # bn-s
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 # bn-s
-import base64
+
 import json
 import uuid
-import requests
-from django.contrib.auth import get_user_model
 
 from webauthn import (
     base64url_to_bytes,
@@ -31,23 +26,29 @@ from webauthn.helpers.structs import (
     RegistrationCredential,
     AuthenticationCredential,
 )
-from webauthn.helpers.cose import COSEAlgorithmIdentifier
 from users.models import Credential, UserAccount, Users, UserCredential
 from typing import Dict
+#####################################################
 
-print("Hello World")
+#####################################################
+# Global variables
 RP_ID = 'bn-s.charles-rocke.repl.co'
 RP_NAME = 'charles-rocke'
-username = "vv@doe.com"
+username = "@doe.com"
 origin = "https://bn-s.charles-rocke.repl.co"
 # A simple way to persist credentials by user ID
 global in_memory_db
 in_memory_db: Dict[str, UserAccount] = {}
 
+global new_user
+new_user = Users()
+
+# end global variables
+
 # Create your views here
+# generate sign up options
 @api_view()
 def handler_generate_registration_options(request):
-	print("hello world")
 	global current_registration_challenge
 	global logged_in_user_id
 	# create a unique user id
@@ -64,16 +65,14 @@ def handler_generate_registration_options(request):
 	user = in_memory_db[logged_in_user_id]
 
 	# get UserAccount id and username
-	print(in_memory_db[user_id].username)
+	# print(in_memory_db[user_id].username)
 
 	
 	# initialize new user
 	new_user = Users(id = in_memory_db[user_id].id, username = in_memory_db[user_id].username)
 	# save new user 
 	new_user.save()
-	users = Users.objects.all()
 	
-	print("CURRENT USERS: ", users)
 	# generate registration options
 	options = generate_registration_options(
         rp_id=RP_ID,
@@ -98,11 +97,10 @@ def handler_generate_registration_options(request):
 	opts = options_to_json(options)
     #convert string to  object
 	json_opts = json.loads(opts)
-	print("REGISTRATION_OPTS TYPE: ",type(Response(json_opts)))
+	
 	return Response(json_opts)
 
-# add user to local database for later authentication
-
+# verify registration response
 @api_view(['GET', 'POST'])
 def handler_verify_registration_response(request):
 	if request.method == "POST":
@@ -112,8 +110,6 @@ def handler_verify_registration_response(request):
 
 		# get the request body
 	    body = request.body
-	    body_parsed = json.loads(body)
-	    print("BODY_PARSED: ", body_parsed)
 	    try:
 	        credential = RegistrationCredential.parse_raw(body)
 	        verification = verify_registration_response(
@@ -133,25 +129,37 @@ def handler_verify_registration_response(request):
 	        sign_count=verification.sign_count,
 	        transports=json.loads(body).get("transports", []),
 	    )
-	
+#######################################################
+#######################################################	
 	    user.credentials.append(new_credential)
+		# view users new credential
 	    print("appending new credential")
-
+#######################################################
+	    # add credential to Users Credential Model
+	    print("USER: ", user)
+	    print("ASSIGNNING NEW_CRED")
+	    new_cred = UserCredential(id=verification.credential_id, public_key=verification.credential_public_key, sign_count=verification.sign_count, transports=json.loads(body).get("transports", []), user = Users.objects.get(id=user.id))
+	    new_cred.save()
+	    print("ASSIGNNING NEW_CRED COMPLETE")
+	    # print("NEW_CRED.USER.USERNAME: ", new_cred.user.username)
+#######################################################
 	    cred_opts = options_to_json(credential)
 	    #convert string to  object
 	    json_opts = json.loads(cred_opts)
-	    print("VERIFICATION_REG_OPTS TYPE: ",type(Response(json_opts)))
+	    
 	    return Response(json_opts)
 
 		
-# login methods
+# # generate authentication options
 @api_view()
 def handler_generate_authentication_options(requests):
 	global current_authentication_challenge
 	global logged_in_user_id
-
+	
+	# current user
 	user = in_memory_db[logged_in_user_id]
 
+	# generating authentication options
 	options = generate_authentication_options(
         rp_id=RP_ID,
         allow_credentials=[{
@@ -162,14 +170,16 @@ def handler_generate_authentication_options(requests):
         user_verification=UserVerificationRequirement.REQUIRED,
     )
 
+	# getting current auth challenge
 	current_authentication_challenge = options.challenge
 
+	# converting authentication options to json
 	opts = options_to_json(options)
-    #convert string to  object
+	
+    # convert authentication options string to  object
 	json_opts = json.loads(opts)
-	print()
-	print("VERIFICATION_OPTS: ", json_opts)
-	print("VERIFICATION_OPTS TYPE: ",type(Response(json_opts)))
+
+	# return django rest framework response
 	return Response(json_opts)
 
 	
@@ -177,26 +187,34 @@ def handler_generate_authentication_options(requests):
 @api_view(['GET', "POST"])
 def hander_verify_authentication_response(request):
 	if request.method == "POST":
-	    print(request.method)
 	    global current_registration_challenge
 	    global logged_in_user_id
 
 		# get the request body
 	    body = request.body
-	    print("25%")
+		
 	    try:
+			# try to get auth credential body
 		    credential = AuthenticationCredential.parse_raw(body)
-	
-	        # Find the user's corresponding public key
+			
+	        # Find the user's corresponding public key #
+			# current user is the user that is logged in
 		    user = in_memory_db[logged_in_user_id]
+
+			# user credential set to None for now
 		    user_credential = None
+
+			# for each Credential object in a users credential list
 		    for _cred in user.credentials:
+				# if the users credential id matches auth credential id
 			    if _cred.id == credential.raw_id:
+					# user credential = the Credential object
 				    user_credential = _cred
-	
+
+			# if user_credential is None raise an exception
 		    if user_credential is None:
 			    raise Exception("Could not find corresponding public key in DB")
-		    print("50%")
+
 	        # Verify the assertion
 		    verification = verify_authentication_response(
 	            credential=credential,
@@ -212,12 +230,12 @@ def hander_verify_authentication_response(request):
 	
 	    # Update our credential's sign count to what the authenticator says it is now
 	    user_credential.sign_count = verification.new_sign_count
-	    print("75%")
+
+		# converting verification options to json
 	    opts = options_to_json(verification)
-	    print(opts)
-	    print(type(opts))
-	    #convert string to  object
+		
+	    # convert verification options string to  object
 	    json_opts = json.loads(opts)
-	    print("100%")
-	    print(type(Response(json_opts)))
+
+		# return django rest framework response
 	    return Response(json_opts)
