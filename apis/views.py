@@ -1,16 +1,14 @@
 from django.shortcuts import render
 from rest_framework.generics import ListAPIView
-from users.models import UserAccount, Credential
 # bn-s
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 # bn-s
-from django.contrib.auth import get_user_model
-from pprint import pprint
 import base64
 import json
 import uuid
 import requests
+from django.contrib.auth import get_user_model
 
 from webauthn import (
     base64url_to_bytes,
@@ -33,12 +31,12 @@ from webauthn.helpers.structs import (
     AuthenticationCredential,
 )
 from webauthn.helpers.cose import COSEAlgorithmIdentifier
-from users.models import Credential, UserAccount, User, UserCredential
+from users.models import Credential, UserAccount, Users, UserCredential
 from typing import Dict
 
 RP_ID = 'bn-s.charles-rocke.repl.co'
 RP_NAME = 'charles-rocke'
-username = "johndoe@doe.com"
+username = "hndoe@doe.com"
 origin = "https://bn-s.charles-rocke.repl.co"
 # A simple way to persist credentials by user ID
 global in_memory_db
@@ -67,9 +65,9 @@ def handler_generate_registration_options(request):
 
 	
 	# initialize new user
-	new_user = User(id = in_memory_db[user_id].id, username = in_memory_db[user_id].username)
-	Xser = get_user_model()
-	users = Xser.objects.all()
+	new_user = Users(id = in_memory_db[user_id].id, username = in_memory_db[user_id].username)
+	new_user.save()
+	users = Users.objects.all()
 	print("CURRENT USERS: ", users)
 	# generate registration options
 	options = generate_registration_options(

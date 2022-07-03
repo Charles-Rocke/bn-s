@@ -32,11 +32,15 @@ class UserAccount:
 
 # specific user credential
 class UserCredential(models.Model):
-	id = models.BinaryField(primary_key=True)
-	public_key = models.BinaryField()
-	sign_count = models.IntegerField()
+	credential_id = models.TextField()
+	public_key = models.TextField()
+	sign_count = models.PositiveBigIntegerField()
+	transports = models.CharField(max_length=20)
 
 # specific user
-class User(models.Model):
+class Users(models.Model):
 	id = models.TextField(primary_key = True, unique = True)
 	username = models.CharField(max_length = 50, unique = True)
+
+	def __str__(self):
+		return self.username

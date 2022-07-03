@@ -1,5 +1,5 @@
 from django.views.generic import TemplateView, ListView
-from .models import User
+from .models import Users
 
 
 # Create your views here.
@@ -8,5 +8,5 @@ class HomePageView(TemplateView):
 	template_name = "users/user_list.html"
 
 class UserView(ListView):
-	model = User
+	model = Users
 	template_name = "users/users.html"
