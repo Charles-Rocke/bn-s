@@ -1,8 +1,12 @@
-from django.shortcuts import render
-from django.views.generic import ListView
-from .models import User
+from django.views.generic import TemplateView, ListView
+from .models import Users
+
 
 # Create your views here.
-class UserListView(ListView):
-    model = User
-    template_name = "user_list.html"
+class HomePageView(TemplateView):
+	http_method_names = ['post', 'get']
+	template_name = "users/user_list.html"
+
+class UserView(ListView):
+	model = Users
+	template_name = "users/users.html"
