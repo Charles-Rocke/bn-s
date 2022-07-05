@@ -39,10 +39,7 @@ origin = "https://bn-s.charles-rocke.repl.co"
 # A simple way to persist credentials by user ID
 global in_memory_db
 in_memory_db: Dict[str, UserAccount] = {}
-
-
-
-# end global variables
+# end global variable
 
 # Create your views here
 # generate sign up options
