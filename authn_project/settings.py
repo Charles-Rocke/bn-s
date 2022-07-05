@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-o510szph^bk_r8yhsdy$@-wu3r*s!sj75oh$z+d0%hz$kbp7=z
 DEBUG = True
 
 ALLOWED_HOSTS = ["31f334f2-bd95-45fe-ae6c-9210b5235b89.id.repl.co","bn-s.charles-rocke.repl.co"]
-
+CSRF_TRUSTED_ORIGINS = ["https://bn-s.charles-rocke.repl.co"]
 
 # Application definition
 
@@ -53,6 +53,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+	'DEFAULT_AUTHENTICATION_CLASSES':[
+		'rest_framework.authentication.TokenAuthentication',
+	]
+}
 
 ROOT_URLCONF = 'authn_project.urls'
 

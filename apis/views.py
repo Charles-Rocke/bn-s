@@ -34,14 +34,13 @@ from typing import Dict
 # Global variables
 RP_ID = 'bn-s.charles-rocke.repl.co'
 RP_NAME = 'charles-rocke'
-username = "@doe.com"
+username = "applengineer@handsome.com"
 origin = "https://bn-s.charles-rocke.repl.co"
 # A simple way to persist credentials by user ID
 global in_memory_db
 in_memory_db: Dict[str, UserAccount] = {}
 
-global new_user
-new_user = Users()
+
 
 # end global variables
 
@@ -51,6 +50,7 @@ new_user = Users()
 def handler_generate_registration_options(request):
 	global current_registration_challenge
 	global logged_in_user_id
+	global new_user
 	# create a unique user id
 	user_id = str(uuid.uuid4())
     
@@ -72,7 +72,7 @@ def handler_generate_registration_options(request):
 	new_user = Users(id = in_memory_db[user_id].id, username = in_memory_db[user_id].username)
 	# save new user 
 	new_user.save()
-	
+	print("NEW_USER ID:", new_user.id)
 	# generate registration options
 	options = generate_registration_options(
         rp_id=RP_ID,
@@ -97,21 +97,25 @@ def handler_generate_registration_options(request):
 	opts = options_to_json(options)
     #convert string to  object
 	json_opts = json.loads(opts)
-	
+	print(json_opts)
 	return Response(json_opts)
 
 # verify registration response
 @api_view(['GET', 'POST'])
 def handler_verify_registration_response(request):
+	print(request.method)
 	if request.method == "POST":
+	    
 	    print(request.method)
 	    global current_registration_challenge
 	    global logged_in_user_id
 
 		# get the request body
 	    body = request.body
+	    
 	    try:
 	        credential = RegistrationCredential.parse_raw(body)
+	        print("25%")
 	        verification = verify_registration_response(
 	            credential=credential,
 	            expected_challenge=current_registration_challenge,
@@ -122,13 +126,14 @@ def handler_verify_registration_response(request):
 	        return {"verified": False, "msg": str(err), "status": 400}
 		
 	    user = in_memory_db[logged_in_user_id]
-	
+	    print("50%")
 	    new_credential = Credential(
 	        id=verification.credential_id,
 	        public_key=verification.credential_public_key,
 	        sign_count=verification.sign_count,
 	        transports=json.loads(body).get("transports", []),
 	    )
+	    print("NEW_CREDENTIAL.ID & .PUBLIC_KEY:", new_credential.id,"\n", new_credential.public_key)
 #######################################################
 #######################################################	
 	    user.credentials.append(new_credential)
@@ -137,11 +142,13 @@ def handler_verify_registration_response(request):
 #######################################################
 	    # add credential to Users Credential Model
 	    print("USER: ", user)
+	    print("NEW_USER ID:", new_user.id)
 	    print("ASSIGNNING NEW_CRED")
-	    new_cred = UserCredential(id=verification.credential_id, public_key=verification.credential_public_key, sign_count=verification.sign_count, transports=json.loads(body).get("transports", []), user = Users.objects.get(id=user.id))
+	    global new_cred
+	    new_cred = UserCredential(id=new_credential.id, public_key=new_credential.public_key, sign_count=new_credential.sign_count, transports=json.loads(body).get("transports", []), user = new_user)
 	    new_cred.save()
 	    print("ASSIGNNING NEW_CRED COMPLETE")
-	    # print("NEW_CRED.USER.USERNAME: ", new_cred.user.username)
+	    print("NEW_CRED.PUBLIC_KEY: ", new_cred.public_key)
 #######################################################
 	    cred_opts = options_to_json(credential)
 	    #convert string to  object
@@ -150,8 +157,8 @@ def handler_verify_registration_response(request):
 	    return Response(json_opts)
 
 		
-# # generate authentication options
-@api_view()
+# generate authentication options
+@api_view(['GET', 'POST'])
 def handler_generate_authentication_options(requests):
 	global current_authentication_challenge
 	global logged_in_user_id
@@ -169,7 +176,7 @@ def handler_generate_authentication_options(requests):
         } for cred in user.credentials],
         user_verification=UserVerificationRequirement.REQUIRED,
     )
-
+	
 	# getting current auth challenge
 	current_authentication_challenge = options.challenge
 
@@ -187,12 +194,13 @@ def handler_generate_authentication_options(requests):
 @api_view(['GET', "POST"])
 def hander_verify_authentication_response(request):
 	if request.method == "POST":
+	    print("0%")
 	    global current_registration_challenge
 	    global logged_in_user_id
 
 		# get the request body
 	    body = request.body
-		
+	    print("10%")
 	    try:
 			# try to get auth credential body
 		    credential = AuthenticationCredential.parse_raw(body)
@@ -200,7 +208,7 @@ def hander_verify_authentication_response(request):
 	        # Find the user's corresponding public key #
 			# current user is the user that is logged in
 		    user = in_memory_db[logged_in_user_id]
-
+		    
 			# user credential set to None for now
 		    user_credential = None
 
@@ -214,20 +222,25 @@ def hander_verify_authentication_response(request):
 			# if user_credential is None raise an exception
 		    if user_credential is None:
 			    raise Exception("Could not find corresponding public key in DB")
-
+		    print("50%")
+		    print(UserCredential.public_key)
+		    # print(type(new_user.public_key))
+		    print(user_credential.public_key)
+		    # print(type(user_credential.public_key))
 	        # Verify the assertion
 		    verification = verify_authentication_response(
 	            credential=credential,
 	            expected_challenge=current_authentication_challenge,
 	            expected_rp_id=RP_ID,
 	            expected_origin=origin,
-	            credential_public_key=user_credential.public_key,
+	            credential_public_key=new_cred.public_key,
 	            credential_current_sign_count=user_credential.sign_count,
 	            require_user_verification=True,
 	        )
 	    except Exception as err:
 		     return {"verified": False, "msg": str(err), "status": 400}
-	
+
+	    print("75%")
 	    # Update our credential's sign count to what the authenticator says it is now
 	    user_credential.sign_count = verification.new_sign_count
 
@@ -236,6 +249,6 @@ def hander_verify_authentication_response(request):
 		
 	    # convert verification options string to  object
 	    json_opts = json.loads(opts)
-
+	    print("100%")
 		# return django rest framework response
 	    return Response(json_opts)

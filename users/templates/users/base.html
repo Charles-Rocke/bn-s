@@ -6,7 +6,7 @@
       <title>authn | demo</title>
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
       <!-- simp webauthn -->
-      <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js" integrity="sha256-oCkDInzzPJ+uR6p8ag/NbHjL32fGnHXSiqgu0y/Sx5Q=" crossorigin="anonymous"></script>
+      <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js" integrity="sha256-RMQYVDdSkOZTJ7BaE4MAt72AkAEtn+lxtsC13XofonE=" crossorigin="anonymous"></script>
       <!-- <script src="static/js/webauthn/authn.js"></script> -->
    </head>
    <body>
@@ -70,6 +70,7 @@
          
            // POST the response to the endpoint that calls
            // @simplewebauthn/server -> verifyRegistrationResponse()
+			 console.log("Fetching verify registration")
            const verificationResp = await fetch('api/verify-registration-response/', {
              method: 'POST',
              headers: {
@@ -77,6 +78,7 @@
              },
              body: JSON.stringify(attResp),
            });
+			 console.log("Fetched verify registration")
            // Wait for the results of verification
            const verificationJSON = await verificationResp.json();
          console.log("GOT VERIFICATION_JSON: ", verificationJSON)
