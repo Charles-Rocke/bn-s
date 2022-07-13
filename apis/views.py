@@ -29,7 +29,7 @@ from webauthn.helpers.structs import (
     RegistrationCredential,
     AuthenticationCredential,
 )
-from users.models import Credential, UserAccount, Users, UserCredential
+from users.models import Users, UserCredential
 from typing import Dict
 
 #####################################################
@@ -40,8 +40,7 @@ RP_ID = 'bn-s.charles-rocke.repl.co'
 RP_NAME = 'charles-rocke'
 origin = "https://bn-s.charles-rocke.repl.co"
 # A simple way to persist credentials by user ID
-global in_memory_db
-in_memory_db: Dict[str, UserAccount] = {}
+
 # end global variable
 
 # Create your views here
@@ -55,36 +54,12 @@ def handler_generate_registration_options(request):
 		if form.is_valid():
              
 			cd = form.cleaned_data
-			 
-			user = Users(username = cd['username'])
-			
-			user.save()
+			print("assinging user")
+			user = Users.objects.create(username = cd['username'])
+			print("assigned user")
 			print(user.username)
-			global current_registration_challenge
-			global logged_in_user_id
-			global new_user
-			# create a unique user id
-			user_id = str(uuid.uuid4())
 		    
-		    # Register new user
-			in_memory_db[user_id] = UserAccount(
-		        id=user_id,
-		        username = user.username,
-		        credentials=[],
-		    )
-		    # Passwordless assumes you're able to identify the user before performing registration or authentication
-			logged_in_user_id = user_id
-			user = in_memory_db[logged_in_user_id]
-		
-			# get UserAccount id and username
-			# print(in_memory_db[user_id].username)
-		
-			
-			# initialize new user
-			new_user = Users(id = in_memory_db[user_id].id, username = in_memory_db[user_id].username)
-			# save new user 
-			new_user.save()
-			print("NEW_USER ID:", new_user.id)
+			print("NEW_USER ID:", user.id)
 			# generate registration options
 			options = generate_registration_options(
 		        rp_id=RP_ID,
@@ -124,7 +99,10 @@ def handler_generate_registration_options(request):
 			# Get cache
 			cached_data = cache.get(key)
 			# end sessions
-	return Response(json_opts)
+			return Response(json_opts)
+			
+		else:
+			print("Form not valid")
 
 # verify registration response
 @api_view(['GET', 'POST'])
