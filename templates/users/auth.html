@@ -1,0 +1,11 @@
+{% extends 'users/base.html' %}
+{% block content %}
+<h1>User list View</h1>
+<div id="success"></div>
+<div id="error"></div>
+<form action="/your-name/" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit" class="btn btn-success" id="btnBeginAuth">Authenticate</button>
+</form>
+{% endblock content %}

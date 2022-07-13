@@ -1,8 +1,11 @@
+# from users app
+from users import forms
+# end users app imports
+
 # bn-s
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 # bn-s
-
 import json
 import uuid
 
@@ -28,13 +31,13 @@ from webauthn.helpers.structs import (
 )
 from users.models import Credential, UserAccount, Users, UserCredential
 from typing import Dict
+
 #####################################################
 
 #####################################################
 # Global variables
 RP_ID = 'bn-s.charles-rocke.repl.co'
 RP_NAME = 'charles-rocke'
-username = "applengineer@handsome.com"
 origin = "https://bn-s.charles-rocke.repl.co"
 # A simple way to persist credentials by user ID
 global in_memory_db
@@ -43,58 +46,84 @@ in_memory_db: Dict[str, UserAccount] = {}
 
 # Create your views here
 # generate sign up options
-@api_view()
+@api_view(['GET', 'POST'])
 def handler_generate_registration_options(request):
-	global current_registration_challenge
-	global logged_in_user_id
-	global new_user
-	# create a unique user id
-	user_id = str(uuid.uuid4())
-    
-    # Register new user
-	in_memory_db[user_id] = UserAccount(
-        id=user_id,
-        username = username,
-        credentials=[],
-    )
-    # Passwordless assumes you're able to identify the user before performing registration or authentication
-	logged_in_user_id = user_id
-	user = in_memory_db[logged_in_user_id]
-
-	# get UserAccount id and username
-	# print(in_memory_db[user_id].username)
-
 	
-	# initialize new user
-	new_user = Users(id = in_memory_db[user_id].id, username = in_memory_db[user_id].username)
-	# save new user 
-	new_user.save()
-	print("NEW_USER ID:", new_user.id)
-	# generate registration options
-	options = generate_registration_options(
-        rp_id=RP_ID,
-        rp_name=RP_NAME,
-        user_id=user.id,
-        user_name=user.username,
-        exclude_credentials=[{
-            "id": cred.id,
-            "transports": cred.transports,
-            "type": "public-key"
-        } for cred in user.credentials],
+	if request.method == 'POST':
+		form = forms.UserNameForm(request.POST)
+ 
+		if form.is_valid():
+             
+			cd = form.cleaned_data
+			 
+			user = Users(username = cd['username'])
+			
+			user.save()
+			print(user.username)
+			global current_registration_challenge
+			global logged_in_user_id
+			global new_user
+			# create a unique user id
+			user_id = str(uuid.uuid4())
+		    
+		    # Register new user
+			in_memory_db[user_id] = UserAccount(
+		        id=user_id,
+		        username = user.username,
+		        credentials=[],
+		    )
+		    # Passwordless assumes you're able to identify the user before performing registration or authentication
+			logged_in_user_id = user_id
+			user = in_memory_db[logged_in_user_id]
 		
-        authenticator_selection=AuthenticatorSelectionCriteria(
-            user_verification=UserVerificationRequirement.REQUIRED),
-        supported_pub_key_algs=[
-            COSEAlgorithmIdentifier.ECDSA_SHA_256,
-            COSEAlgorithmIdentifier.RSASSA_PKCS1_v1_5_SHA_256,
-        ],
-    )
-    
-	current_registration_challenge = options.challenge
-	opts = options_to_json(options)
-    #convert string to  object
-	json_opts = json.loads(opts)
-	print(json_opts)
+			# get UserAccount id and username
+			# print(in_memory_db[user_id].username)
+		
+			
+			# initialize new user
+			new_user = Users(id = in_memory_db[user_id].id, username = in_memory_db[user_id].username)
+			# save new user 
+			new_user.save()
+			print("NEW_USER ID:", new_user.id)
+			# generate registration options
+			options = generate_registration_options(
+		        rp_id=RP_ID,
+		        rp_name=RP_NAME,
+		        user_id=user.id,
+		        user_name=user.username,
+		        exclude_credentials=[{
+		            "id": cred.id,
+		            "transports": cred.transports,
+		            "type": "public-key"
+		        } for cred in user.credentials],
+				
+		        authenticator_selection=AuthenticatorSelectionCriteria(
+		            user_verification=UserVerificationRequirement.REQUIRED),
+		        supported_pub_key_algs=[
+		            COSEAlgorithmIdentifier.ECDSA_SHA_256,
+		            COSEAlgorithmIdentifier.RSASSA_PKCS1_v1_5_SHA_256,
+		        ],
+		    )
+		    
+			current_registration_challenge = options.challenge
+			opts = options_to_json(options)
+		    #convert string to  object
+			json_opts = json.loads(opts)
+			print(json_opts)
+			
+			# sessions
+			session_key = request.session.session_key
+			from django.core.cache import cache
+			key = f'wachallenge_{session_key}'
+			expire = 60000
+			challenge = options.challenge
+			
+			# Set cache
+			cache.set(key, challenge, expire)
+			
+			# Get cache
+			cached_data = cache.get(key)
+			# end sessions
 	return Response(json_opts)
 
 # verify registration response
@@ -151,7 +180,7 @@ def handler_verify_registration_response(request):
 	    #convert string to  object
 	    json_opts = json.loads(cred_opts)
 	    
-	    return Response(json_opts)
+	return Response(json_opts)
 
 		
 # generate authentication options
@@ -248,4 +277,4 @@ def hander_verify_authentication_response(request):
 	    json_opts = json.loads(opts)
 	    print("100%")
 		# return django rest framework response
-	    return Response(json_opts)
+	return Response(json_opts)
