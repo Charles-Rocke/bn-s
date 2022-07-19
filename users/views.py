@@ -1,5 +1,5 @@
 from django.views.generic import TemplateView, ListView, FormView
-from .models import Users
+from .models import User
 from .forms import UserNameForm
 from django.urls import reverse_lazy
 # Create your views here.
@@ -9,5 +9,5 @@ class HomePageView(FormView):
 	success_url = reverse_lazy("auth")
 
 class UserView(ListView):
-	model = Users
+	model = User
 	template_name = "users/auth.html"

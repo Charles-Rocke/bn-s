@@ -1,10 +1,16 @@
-from django.db import models
 from webauthn.helpers.structs import AuthenticatorTransport
 from typing import Optional, List
 from dataclasses import dataclass, field
+from uuid import uuid4
+
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+
+
 
 # Create your models here.
 # Credential
+"""
 @dataclass
 class Credential:
     id: bytes
@@ -30,12 +36,12 @@ class UserAccount:
 	    self.id = id
 	    self.username = username
 	    self.credentials = credentials
-
+"""
 		
 
 # specific user
-class Users(models.Model):
-	id = models.TextField(primary_key = True, unique = True)
+class User(AbstractUser):
+	id = models.UUIDField(primary_key=True, default=uuid4, editable=False, unique = True)
 	username = models.CharField(max_length = 50, unique = True)
 
 	def __str__(self):
@@ -48,4 +54,4 @@ class UserCredential(models.Model):
 	public_key = models.BinaryField()
 	sign_count = models.PositiveBigIntegerField()
 	transports = models.CharField(max_length=20)
-	user = models.ForeignKey(Users, on_delete=models.CASCADE)
+	user = models.ForeignKey(User, on_delete=models.CASCADE)

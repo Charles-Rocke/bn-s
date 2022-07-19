@@ -1,8 +1,8 @@
 # from users app
 from users import forms
 # end users app imports
-
 # bn-s
+from django.views.decorators.cache import never_cache
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 # bn-s
@@ -29,11 +29,12 @@ from webauthn.helpers.structs import (
     RegistrationCredential,
     AuthenticationCredential,
 )
-from users.models import Users, UserCredential
+from users.models import User, UserCredential
 from typing import Dict
 
 #####################################################
-
+from django.contrib.auth import get_user_model
+user_model = get_user_model()
 #####################################################
 # Global variables
 RP_ID = 'bn-s.charles-rocke.repl.co'
@@ -45,7 +46,9 @@ origin = "https://bn-s.charles-rocke.repl.co"
 
 # Create your views here
 # generate sign up options
+
 @api_view(['GET', 'POST'])
+@never_cache
 def handler_generate_registration_options(request):
 	
 	if request.method == 'POST':
@@ -55,7 +58,7 @@ def handler_generate_registration_options(request):
              
 			cd = form.cleaned_data
 			print("assinging user")
-			user = Users.objects.create(username = cd['username'])
+			user = User.objects.create(username = cd['username'])
 			print("assigned user")
 			print(user.username)
 		    
