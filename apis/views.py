@@ -67,13 +67,8 @@ def handler_generate_registration_options(request):
 			options = generate_registration_options(
 		        rp_id=RP_ID,
 		        rp_name=RP_NAME,
-		        user_id=user.id,
+		        user_id=str(user.id),
 		        user_name=user.username,
-		        exclude_credentials=[{
-		            "id": cred.id,
-		            "transports": cred.transports,
-		            "type": "public-key"
-		        } for cred in user.credentials],
 				
 		        authenticator_selection=AuthenticatorSelectionCriteria(
 		            user_verification=UserVerificationRequirement.REQUIRED),
@@ -88,7 +83,7 @@ def handler_generate_registration_options(request):
 		    #convert string to  object
 			json_opts = json.loads(opts)
 			print(json_opts)
-			
+			print("caching")
 			# sessions
 			session_key = request.session.session_key
 			from django.core.cache import cache
@@ -106,6 +101,7 @@ def handler_generate_registration_options(request):
 			
 		else:
 			print("Form not valid")
+#########################################################
 
 # verify registration response
 @api_view(['GET', 'POST'])
@@ -141,29 +137,26 @@ def handler_verify_registration_response(request):
 	        transports=json.loads(body).get("transports", []),
 	    )
 	    print("NEW_CREDENTIAL.ID & .PUBLIC_KEY:", new_credential.id,"\n", new_credential.public_key)
-#######################################################
-#######################################################	
+
 	    user.credentials.append(new_credential)
 		# view users new credential
 	    print("appending new credential")
-#######################################################
 	    # add credential to Users Credential Model
 	    print("USER: ", user)
 	    print("NEW_USER ID:", new_user.id)
 	    print("ASSIGNNING NEW_CRED")
 	    global new_cred
-	    new_cred = UserCredential(id=new_credential.id, public_key=new_credential.public_key, sign_count=new_credential.sign_count, transports=json.loads(body).get("transports", []), user = new_user)
-	    new_cred.save()
+	    new_cred = UserCredential.objects.create(id=new_credential.id, public_key=new_credential.public_key, sign_count=new_credential.sign_count, transports=json.loads(body).get("transports", []), user = new_user)
 	    print("ASSIGNNING NEW_CRED COMPLETE")
 	    print("NEW_CRED.PUBLIC_KEY: ", new_cred.public_key)
-#######################################################
+
 	    cred_opts = options_to_json(credential)
 	    #convert string to  object
 	    json_opts = json.loads(cred_opts)
 	    
 	return Response(json_opts)
 
-		
+#########################################################
 # generate authentication options
 @api_view(['GET', 'POST'])
 def handler_generate_authentication_options(requests):
@@ -196,7 +189,7 @@ def handler_generate_authentication_options(requests):
 	# return django rest framework response
 	return Response(json_opts)
 
-	
+#######################################################	
 # verify authentication response
 @api_view(['GET', "POST"])
 def hander_verify_authentication_response(request):
