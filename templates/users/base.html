@@ -30,11 +30,13 @@
          {% block content %}
          {% endblock content %}
       </div>
-	   
+<!-------------------------------------------------------->
       <!-- Registration Script-->
       <script>
          const { startRegistration } = SimpleWebAuthnBrowser;
-         
+         function stopSubmit(event) {
+			 event.preventDefault();
+		 }
          // <button>
          const elemBegin = document.getElementById('btnBegin');
          // <span>/<p>/etc...
@@ -81,7 +83,8 @@
 			 console.log("Fetched verify registration")
            // Wait for the results of verification
            const verificationJSON = await verificationResp.json();
-         console.log("GOT VERIFICATION_JSON: ", verificationJSON)
+         console.log("GOT VERIFICATION_JSON: ", verificationJSON);
+			 console.log("registered")
            // Show UI appropriate for the `verified` status
            if (verificationJSON && verificationJSON.verified) {
              elemSuccess.innerHTML = 'Success!';

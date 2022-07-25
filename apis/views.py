@@ -29,7 +29,7 @@ from webauthn.helpers.structs import (
     RegistrationCredential,
     AuthenticationCredential,
 )
-from users.models import User, UserCredential
+from users.models import User, UserCredential, UserAccount
 from typing import Dict
 
 #####################################################
@@ -50,57 +50,43 @@ origin = "https://bn-s.charles-rocke.repl.co"
 @api_view(['GET', 'POST'])
 @never_cache
 def handler_generate_registration_options(request):
+	print("in generate reg")
+	print("POST")
+	print("assinging user")
+	user = User.objects.create(id = str(uuid.uuid4()), username="ayebaybay@n.com")
+	print("assigned user")
+	print(user.username)
 	
-	if request.method == 'POST':
-		form = forms.UserNameForm(request.POST)
- 
-		if form.is_valid():
-             
-			cd = form.cleaned_data
-			print("assinging user")
-			user = User.objects.create(username = cd['username'])
-			print("assigned user")
-			print(user.username)
-		    
-			print("NEW_USER ID:", user.id)
-			# generate registration options
-			options = generate_registration_options(
-		        rp_id=RP_ID,
-		        rp_name=RP_NAME,
-		        user_id=str(user.id),
-		        user_name=user.username,
-				
-		        authenticator_selection=AuthenticatorSelectionCriteria(
-		            user_verification=UserVerificationRequirement.REQUIRED),
-		        supported_pub_key_algs=[
-		            COSEAlgorithmIdentifier.ECDSA_SHA_256,
-		            COSEAlgorithmIdentifier.RSASSA_PKCS1_v1_5_SHA_256,
-		        ],
-		    )
-		    
-			current_registration_challenge = options.challenge
-			opts = options_to_json(options)
-		    #convert string to  object
-			json_opts = json.loads(opts)
-			print(json_opts)
-			print("caching")
-			# sessions
-			session_key = request.session.session_key
-			from django.core.cache import cache
-			key = f'wachallenge_{session_key}'
-			expire = 60000
-			challenge = options.challenge
-			
-			# Set cache
-			cache.set(key, challenge, expire)
-			
-			# Get cache
-			cached_data = cache.get(key)
-			# end sessions
-			return Response(json_opts)
-			
-		else:
-			print("Form not valid")
+	print("NEW_USER ID:", user.id)
+	
+	# generate registration options
+	options = generate_registration_options(
+		rp_id=RP_ID,
+		rp_name=RP_NAME,
+		user_id=user.id,
+		user_name=user.username,
+		exclude_credentials=[{
+			"id": user.id,
+			"transports": ["internal"],
+			"type": "public-key"
+		} for cred in user.credentials],
+		
+		authenticator_selection=AuthenticatorSelectionCriteria(
+			user_verification=UserVerificationRequirement.REQUIRED),
+		supported_pub_key_algs=[
+			COSEAlgorithmIdentifier.ECDSA_SHA_256,
+			COSEAlgorithmIdentifier.RSASSA_PKCS1_v1_5_SHA_256,
+		],
+	)
+	
+	current_registration_challenge = options.challenge
+	opts = options_to_json(options)
+	#convert string to  object
+	json_opts = json.loads(opts)
+	print(json_opts)
+	
+	
+	return Response(json_opts)
 #########################################################
 
 # verify registration response

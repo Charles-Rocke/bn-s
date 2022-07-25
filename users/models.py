@@ -10,7 +10,7 @@ from django.db import models
 
 # Create your models here.
 # Credential
-"""
+
 @dataclass
 class Credential:
     id: bytes
@@ -36,13 +36,14 @@ class UserAccount:
 	    self.id = id
 	    self.username = username
 	    self.credentials = credentials
-"""
+
 		
 
 # specific user
 class User(AbstractUser):
 	id = models.UUIDField(primary_key=True, default=uuid4, editable=False, unique = True)
 	username = models.CharField(max_length = 50, unique = True)
+	credentials = models.TextField(default = ' ')
 
 	def __str__(self):
 		return self.username
