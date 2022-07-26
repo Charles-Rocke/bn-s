@@ -1,0 +1,5 @@
+<form action="{% url 'django_user:signup' %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Submit">
+</form>
