@@ -31,12 +31,12 @@ from webauthn.helpers.structs import (
     RegistrationCredential,
     AuthenticationCredential,
 )
-from users.models import User, UserCredential, UserAccount
+from users.models import UserAccount
 from typing import Dict
 
 #####################################################
 from django.contrib.auth import get_user_model
-user_model = get_user_model()
+User = get_user_model()
 #####################################################
 # Global variables
 RP_ID = 'bn-s.charles-rocke.repl.co'
