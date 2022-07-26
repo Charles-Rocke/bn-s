@@ -1,7 +1,9 @@
-from django.views.generic import TemplateView, ListView, FormView
-from .models import User
-from .forms import UserNameForm
+from django.contrib.auth import get_user_model
+from django.views.generic import ListView, FormView
 from django.urls import reverse_lazy
+
+from .forms import UserNameForm
+
 # Create your views here.
 class HomePageView(FormView):
 	form_class = UserNameForm
@@ -9,5 +11,5 @@ class HomePageView(FormView):
 	success_url = reverse_lazy("auth")
 
 class UserView(ListView):
-	model = User
+	model = get_user_model()
 	template_name = "users/auth.html"
