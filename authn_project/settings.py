@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # local
     'apis.apps.ApisConfig',
     'users.apps.UsersConfig',
+    'django_user',
 ]
 
 MIDDLEWARE = [
