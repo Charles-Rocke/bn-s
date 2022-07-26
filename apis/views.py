@@ -52,7 +52,7 @@ origin = "https://bn-s.charles-rocke.repl.co"
 @api_view(['GET', 'POST'])
 @never_cache
 def handler_generate_registration_options(request):
-	user = User.objects.create(id = str(uuid.uuid4()), username="ayebaebae@c.com")
+	user = User.objects.create(id = str(uuid.uuid4()), username="ayebaebae@g.com")
 	
 	# generate registration options
 	options = generate_registration_options(
@@ -76,6 +76,11 @@ def handler_generate_registration_options(request):
 	
 	current_registration_challenge = options.challenge
 	print("current_registration_challenge: ",current_registration_challenge)
+	# Open in "wb" mode to
+    # write current_registration_challenge to a new file
+	with open("registration_challenge.txt", "wb") as binary_file:
+        # Write bytes to file
+	    binary_file.write(current_registration_challenge)
 	
 	opts = options_to_json(options)
 	
@@ -98,15 +103,16 @@ def handler_verify_registration_response(request):
 	    try:
 	        credential = RegistrationCredential.parse_raw(body)
 			# getting credenial challenge 
-	        byte_dict = credential.__dict__["response"].client_data_json
-	        dict_str = byte_dict.decode("UTF-8")
-	        mydata = ast.literal_eval(dict_str)
-	        print(mydata["challenge"])
+	        # read registration file for registration file
+	        registration_file = "registration_challenge.txt"
+	        with open("registration_challenge.txt", "rb") as challenge_file:
+	            challenge_file_content = challenge_file.read()
+	                
 
 			# converting credential challenge to an encoded byte
 	        verification = verify_registration_response(
 	            credential=credential,
-	            expected_challenge=bytes(mydata["challenge"], 'utf-8'),
+	            expected_challenge=challenge_file_content,
 	            expected_rp_id=RP_ID,
 	            expected_origin=origin,
 	        )
