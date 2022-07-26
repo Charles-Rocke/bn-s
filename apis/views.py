@@ -8,6 +8,8 @@ from rest_framework.response import Response
 # bn-s
 import json
 import uuid
+# for decoded byte dictionary
+import ast
 
 from webauthn import (
     base64url_to_bytes,
@@ -50,14 +52,7 @@ origin = "https://bn-s.charles-rocke.repl.co"
 @api_view(['GET', 'POST'])
 @never_cache
 def handler_generate_registration_options(request):
-	print("in generate reg")
-	print("POST")
-	print("assinging user")
-	user = User.objects.create(id = str(uuid.uuid4()), username="ayebaybay@n.com")
-	print("assigned user")
-	print(user.username)
-	
-	print("NEW_USER ID:", user.id)
+	user = User.objects.create(id = str(uuid.uuid4()), username="ayebaebae@c.com")
 	
 	# generate registration options
 	options = generate_registration_options(
@@ -80,10 +75,12 @@ def handler_generate_registration_options(request):
 	)
 	
 	current_registration_challenge = options.challenge
+	print("current_registration_challenge: ",current_registration_challenge)
+	
 	opts = options_to_json(options)
+	
 	#convert string to  object
 	json_opts = json.loads(opts)
-	print(json_opts)
 	
 	
 	return Response(json_opts)
@@ -92,31 +89,34 @@ def handler_generate_registration_options(request):
 # verify registration response
 @api_view(['GET', 'POST'])
 def handler_verify_registration_response(request):
-	print(request.method)
 	if request.method == "POST":
-	    
-	    print(request.method)
-	    global current_registration_challenge
 	    global logged_in_user_id
-
+		
 		# get the request body
 	    body = request.body
 	    
 	    try:
 	        credential = RegistrationCredential.parse_raw(body)
-	        print("25%")
+			# getting credenial challenge 
+	        byte_dict = credential.__dict__["response"].client_data_json
+	        dict_str = byte_dict.decode("UTF-8")
+	        mydata = ast.literal_eval(dict_str)
+	        print(mydata["challenge"])
+
+			# converting credential challenge to an encoded byte
 	        verification = verify_registration_response(
 	            credential=credential,
-	            expected_challenge=current_registration_challenge,
+	            expected_challenge=bytes(mydata["challenge"], 'utf-8'),
 	            expected_rp_id=RP_ID,
 	            expected_origin=origin,
 	        )
 	    except Exception as err:
-	        return {"verified": False, "msg": str(err), "status": 400}
+	        print()
+	        print(f"ERROR: {err}")
+	        #return {"verified": False, "msg": str(err), "status": 400}
 		
-	    user = in_memory_db[logged_in_user_id]
 	    print("50%")
-	    new_credential = Credential(
+	    new_credential = UserCredential(
 	        id=verification.credential_id,
 	        public_key=verification.credential_public_key,
 	        sign_count=verification.sign_count,
@@ -129,7 +129,7 @@ def handler_verify_registration_response(request):
 	    print("appending new credential")
 	    # add credential to Users Credential Model
 	    print("USER: ", user)
-	    print("NEW_USER ID:", new_user.id)
+	    print("NEW_USER ID:", user.id)
 	    print("ASSIGNNING NEW_CRED")
 	    global new_cred
 	    new_cred = UserCredential.objects.create(id=new_credential.id, public_key=new_credential.public_key, sign_count=new_credential.sign_count, transports=json.loads(body).get("transports", []), user = new_user)
