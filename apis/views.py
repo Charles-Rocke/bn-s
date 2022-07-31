@@ -1,3 +1,4 @@
+import os
 # from users app
 from users import forms
 # end users app imports
@@ -33,10 +34,10 @@ from webauthn.helpers.structs import (
 )
 from users.models import User, UserCredential, UserAccount
 from typing import Dict
-
+from django.http import JsonResponse
 #####################################################
-from django.contrib.auth import get_user_model
-user_model = get_user_model()
+# for authenticating users
+from django.contrib.auth import authenticate
 #####################################################
 # Global variables
 RP_ID = 'bn-s.charles-rocke.repl.co'
@@ -52,17 +53,22 @@ origin = "https://bn-s.charles-rocke.repl.co"
 @api_view(['GET', 'POST'])
 @never_cache
 def handler_generate_registration_options(request):
-	user = User.objects.create(id = str(uuid.uuid4()), username="ayebaebae@g.com")
+	data_from_post = json.load(request)['post_data']
+	print(f"data: {data_from_post}")
+	print("else")
+	user = User.objects.create_user(username="hello@mames.com")
 	
 	# generate registration options
+	# user.id must be a string for encoding
+	print("GENERATE REG OPTIONS")
 	options = generate_registration_options(
 		rp_id=RP_ID,
 		rp_name=RP_NAME,
-		user_id=user.id,
+		user_id=str(user.id),
 		user_name=user.username,
 		exclude_credentials=[{
-			"id": user.id,
-			"transports": ["internal"],
+			"id": str(user.id),
+			"transports": ["internal", "nfc", "usb"],
 			"type": "public-key"
 		} for cred in user.credentials],
 		
@@ -73,21 +79,30 @@ def handler_generate_registration_options(request):
 			COSEAlgorithmIdentifier.RSASSA_PKCS1_v1_5_SHA_256,
 		],
 	)
-	
+	print("FINISHED GENERATING REG OPTIONS")
 	current_registration_challenge = options.challenge
-	print("current_registration_challenge: ",current_registration_challenge)
 	# Open in "wb" mode to
-    # write current_registration_challenge to a new file
+	# write current_registration_challenge to a new file
+	print("WRITING FILE")
 	with open("registration_challenge.txt", "wb") as binary_file:
-        # Write bytes to file
-	    binary_file.write(current_registration_challenge)
-	
+		# Write bytes to file
+		binary_file.write(current_registration_challenge)
+	print("FINISHED WRITING FILE")
+
+	print("OPTIONS TO JSON")
 	opts = options_to_json(options)
+	print("FINISHED OPTIONS TO JSON")
 	
 	#convert string to  object
+	print("JSON LOADS OPTIONS")
 	json_opts = json.loads(opts)
-	
-	
+	print(json_opts)
+	print("FINISHED JSON LOADS")
+
+	print("PRINTING JSON OPTIONS")
+	print(Response(json_opts))
+
+	print("RETURNING JSON OPTIONS")
 	return Response(json_opts)
 #########################################################
 
@@ -95,56 +110,60 @@ def handler_generate_registration_options(request):
 @api_view(['GET', 'POST'])
 def handler_verify_registration_response(request):
 	if request.method == "POST":
-	    global logged_in_user_id
+		print("POST")
+	    
 		
 		# get the request body
-	    body = request.body
+		body = request.body
 	    
-	    try:
-	        credential = RegistrationCredential.parse_raw(body)
+		try:
+			credential = RegistrationCredential.parse_raw(body)
 			# getting credenial challenge 
-	        # read registration file for registration file
-	        registration_file = "registration_challenge.txt"
-	        with open("registration_challenge.txt", "rb") as challenge_file:
-	            challenge_file_content = challenge_file.read()
-	                
-
+			with open("registration_challenge.txt", "rb") as challenge_file:
+				challenge_file_content = challenge_file.read()
+					
+	
 			# converting credential challenge to an encoded byte
-	        verification = verify_registration_response(
-	            credential=credential,
-	            expected_challenge=challenge_file_content,
-	            expected_rp_id=RP_ID,
-	            expected_origin=origin,
-	        )
-	    except Exception as err:
-	        print()
-	        print(f"ERROR: {err}")
-	        #return {"verified": False, "msg": str(err), "status": 400}
+			verification = verify_registration_response(
+				credential=credential,
+				expected_challenge=challenge_file_content,
+				expected_rp_id=RP_ID,
+				expected_origin=origin,
+			)
+		except Exception as err:
+			print()
+			print(f"ERROR: {err}")
+			#return {"verified": False, "msg": str(err), "status": 400}
+		registration_challenge_file = "registration_challenge.txt"
+		os.remove(registration_challenge_file)
+		print("50%")
+	
+		# creating users credential
+		new_credential = UserCredential(
+			id=verification.credential_id,
+			public_key=verification.credential_public_key,
+			sign_count=verification.sign_count,
+			transports=json.loads(body).get("transports", []),
+		)
+	
+		# after verification, user must be the currently logged in user
+		# current user = verified registrant
 		
-	    print("50%")
-	    new_credential = UserCredential(
-	        id=verification.credential_id,
-	        public_key=verification.credential_public_key,
-	        sign_count=verification.sign_count,
-	        transports=json.loads(body).get("transports", []),
-	    )
-	    print("NEW_CREDENTIAL.ID & .PUBLIC_KEY:", new_credential.id,"\n", new_credential.public_key)
-
-	    user.credentials.append(new_credential)
+		print(user.username)
 		# view users new credential
-	    print("appending new credential")
-	    # add credential to Users Credential Model
-	    print("USER: ", user)
-	    print("NEW_USER ID:", user.id)
-	    print("ASSIGNNING NEW_CRED")
-	    global new_cred
-	    new_cred = UserCredential.objects.create(id=new_credential.id, public_key=new_credential.public_key, sign_count=new_credential.sign_count, transports=json.loads(body).get("transports", []), user = new_user)
-	    print("ASSIGNNING NEW_CRED COMPLETE")
-	    print("NEW_CRED.PUBLIC_KEY: ", new_cred.public_key)
-
-	    cred_opts = options_to_json(credential)
-	    #convert string to  object
-	    json_opts = json.loads(cred_opts)
+		print("appending new credential")
+		# add credential to Users Credential Model
+		print("USER: ", user)
+		print("NEW_USER ID:", user.id)
+		print("ASSIGNNING NEW_CRED")
+		global new_cred
+		new_cred = UserCredential.objects.create(id=new_credential.id, public_key=new_credential.public_key, sign_count=new_credential.sign_count, transports=json.loads(body).get("transports", []), user = new_user)
+		print("ASSIGNNING NEW_CRED COMPLETE")
+		print("NEW_CRED.PUBLIC_KEY: ", new_cred.public_key)
+	
+		cred_opts = options_to_json(credential)
+		#convert string to  object
+		json_opts = json.loads(cred_opts)
 	    
 	return Response(json_opts)
 
