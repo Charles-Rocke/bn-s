@@ -1,9 +1,8 @@
 from webauthn.helpers.structs import AuthenticatorTransport
 from typing import Optional, List
 from dataclasses import dataclass, field
-from uuid import uuid4
 
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth import get_user_model
 from django.db import models
 
 
@@ -37,16 +36,6 @@ class UserAccount:
 	    self.username = username
 	    self.credentials = credentials
 
-		
-
-# specific user
-class User(AbstractUser):
-	id = models.UUIDField(primary_key=True, default=uuid4, editable=False, unique = True)
-	username = models.CharField(max_length = 50, unique = True)
-	credentials = models.TextField(default = ' ')
-
-	def __str__(self):
-		return self.username
 
 # specific user credential
 class UserCredential(models.Model):
@@ -55,4 +44,4 @@ class UserCredential(models.Model):
 	public_key = models.BinaryField()
 	sign_count = models.PositiveBigIntegerField()
 	transports = models.CharField(max_length=20)
-	user = models.ForeignKey(User, on_delete=models.CASCADE)
+	user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)

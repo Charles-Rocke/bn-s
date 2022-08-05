@@ -32,12 +32,17 @@ from webauthn.helpers.structs import (
     RegistrationCredential,
     AuthenticationCredential,
 )
-from users.models import User, UserCredential, UserAccount
+from users.models import UserAccount
 from typing import Dict
 from django.http import JsonResponse
 #####################################################
+<<<<<<< HEAD
 # for authenticating users
 from django.contrib.auth import authenticate
+=======
+from django.contrib.auth import get_user_model
+User = get_user_model()
+>>>>>>> 3f587ca449e474fea6db8d91ec9495290cbd8dc6
 #####################################################
 # Global variables
 RP_ID = 'bn-s.charles-rocke.repl.co'

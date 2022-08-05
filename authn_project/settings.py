@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-o510szph^bk_r8yhsdy$@-wu3r*s!sj75oh$z+d0%hz$kbp7=z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["31f334f2-bd95-45fe-ae6c-9210b5235b89.id.repl.co","bn-s.charles-rocke.repl.co"]
+ALLOWED_HOSTS = ["31f334f2-bd95-45fe-ae6c-9210b5235b89.id.repl.co","bn-s.charles-rocke.repl.co", "localhost"]
 CSRF_TRUSTED_ORIGINS = ["https://bn-s.charles-rocke.repl.co"]
 
 # Application definition
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # local
     'apis.apps.ApisConfig',
     'users.apps.UsersConfig',
+    'django_user',
 ]
 
 # auth user model
@@ -135,3 +136,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+<<<<<<< HEAD
+=======
+
+LOGIN_REDIRECT_URL = "register"
+LOGOUT_REDIRECT_URL = "django_user:login"
+>>>>>>> 3f587ca449e474fea6db8d91ec9495290cbd8dc6
