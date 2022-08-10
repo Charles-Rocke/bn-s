@@ -1,9 +1,11 @@
 {% extends 'users/base.html' %}
 {% block content %}
-<form action="{% url 'django_user:signup' %}" method="post">
+<div id="success"></div>
+<div id="error"></div>
+<div>
     {% csrf_token %}
     {{ form }}
     <button type="submit" class="btn btn-primary" id="btnBegin">Register</button>
-</form>
+</div>
 
 {% endblock content %}

@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'django_user',
 ]
 
-
+# auth user model
+AUTH_USER_MODEL = 'auth.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -136,7 +137,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-LOGIN_REDIRECT_URL = "register"
+ACCOUNT_SIGNUP_REDIRECT_URL = "accounts/login"
+LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "django_user:login"
 
