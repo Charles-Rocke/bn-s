@@ -1,4 +1,4 @@
-{% extends 'users/base.html' %}
+{% extends 'base.html' %}
 {% block content %}
 <form action="{% url 'django_user:login' %}" method="post">
     {% csrf_token %}

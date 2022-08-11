@@ -59,7 +59,7 @@ origin = "https://bn-s.charles-rocke.repl.co"
 @never_cache
 def handler_generate_registration_options(request):
 	print("else")
-	user = User.objects.create_user(username="hello@mames.com")
+	user = User.objects.create_user(username="hello@kkkkes.com")
 	
 	# generate registration options
 	# user.id must be a string for encoding
