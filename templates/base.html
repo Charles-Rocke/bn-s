@@ -57,7 +57,13 @@
               // GET registration options from the endpoint that calls
               // @simplewebauthn/server -> generateRegistrationOptions()
             	// Get users value in input field
-	            
+	            $(document).ready(function(){
+            		$("button").click(function(){
+            			console.log("button clicked")
+            			var signupValue=$("input:text").val();
+									console.log(signupValue);
+            		});
+            	});
               const resp = await fetch('/api/generate-registration-options/');
               // what is the response
               console.log("RESPONSE...: ",resp);

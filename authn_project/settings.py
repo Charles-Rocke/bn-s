@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 3rd party
     'rest_framework',
+		"allauth",
+    "allauth.account",
     # local
     'apis.apps.ApisConfig',
     'users.apps.UsersConfig',
@@ -137,6 +139,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
 ACCOUNT_SIGNUP_REDIRECT_URL = "accounts/login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "django_user:login"
