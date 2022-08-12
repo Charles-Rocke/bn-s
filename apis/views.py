@@ -58,6 +58,7 @@ origin = "https://bn-s.charles-rocke.repl.co"
 @api_view(['GET', 'POST'])
 @never_cache
 def handler_generate_registration_options(request):
+	# get user signup input
 	print("else")
 	user = request.user
 	# user = User.objects.create_user(username="hello@kkkkes.com")

@@ -4,16 +4,16 @@ from django.contrib.auth.forms import UserCreationForm
 
 
 class UserCreateForm(UserCreationForm):
-	username = forms.CharField(max_length=100, required=True)
-
 	def __init__(self, *args, **kwargs):
 		super(UserCreateForm, self).__init__(*args, **kwargs)
 		self.fields.pop('password1')
-
+		self.fields.pop('password2')
 		
 	class Meta:
-			model = User
-
+		model = User
+		fields = ('username',)
+	
+	
 	def save(self, commit=True):
 			if not commit:
 					raise NotImplementedError("Can't create User and UserProfile without database save")
