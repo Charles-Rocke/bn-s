@@ -36,13 +36,13 @@ from users.models import UserAccount
 from typing import Dict
 from django.http import JsonResponse
 #####################################################
-
+<<<<<<< HEAD
 # for authenticating users
 from django.contrib.auth import authenticate
-
+=======
 from django.contrib.auth import get_user_model
 User = get_user_model()
-
+>>>>>>> 3f587ca449e474fea6db8d91ec9495290cbd8dc6
 #####################################################
 # Global variables
 RP_ID = 'bn-s.charles-rocke.repl.co'
@@ -58,10 +58,10 @@ origin = "https://bn-s.charles-rocke.repl.co"
 @api_view(['GET', 'POST'])
 @never_cache
 def handler_generate_registration_options(request):
-	# get user signup input
+	data_from_post = json.load(request)['post_data']
+	print(f"data: {data_from_post}")
 	print("else")
-	user = request.user
-	# user = User.objects.create_user(username="hello@kkkkes.com")
+	user = User.objects.create_user(username="hello@mames.com")
 	
 	# generate registration options
 	# user.id must be a string for encoding
