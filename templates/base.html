@@ -63,10 +63,11 @@
             			var signupValue=$("input:text").val();
             			// send data to python server
 			            $.ajax({
-			            url:"/api/generate-registration-options/",
-			            type:"POST",
-			            contentType: "application/json",
-			            data: JSON.stringify("post_data":signupValue)});
+			            	url:"/api/generate-registration-options/",
+			            	type:"POST",
+			            	contentType: "application/json",
+			            	data: JSON.stringify({"post_data":signupValue})
+									});
             		});
             	});
               const resp = await fetch('/api/generate-registration-options/');
