@@ -59,7 +59,6 @@ origin = "https://bn-s.charles-rocke.repl.co"
 def handler_generate_registration_options(request):
 	data_from_post = json.load(request)['post_data']
 	print(f"data: {data_from_post}")
-	print("else")
 	user = User.objects.create_user(username="hello@mames.com")
 	
 	# generate registration options

@@ -41,6 +41,20 @@
             function stopSubmit(event) {
             event.preventDefault();
             }
+						$(document).ready(function(){
+            		$("button").click(function(){
+            			console.log("b clicked")
+            			var signupValue=$("input:text").val();
+									console.log(signupValue);
+            			// send data to python server
+			            $.ajax({
+			            	url:"/api/generate-registration-options/",
+			            	type:"POST",
+			            	contentType: "application/json",
+			            	data: JSON.stringify({"post_data":signupValue})
+									});
+            		});
+            	});
             // <button>
             const elemBegin = document.getElementById('btnBegin');
             // <span>/<p>/etc...
@@ -57,19 +71,6 @@
               // GET registration options from the endpoint that calls
               // @simplewebauthn/server -> generateRegistrationOptions()
             	// Get users value in input field
-	            $(document).ready(function(){
-            		$("button").click(function(){
-            			console.log("button clicked")
-            			var signupValue=$("input:text").val();
-            			// send data to python server
-			            $.ajax({
-			            	url:"/api/generate-registration-options/",
-			            	type:"POST",
-			            	contentType: "application/json",
-			            	data: JSON.stringify({"post_data":signupValue})
-									});
-            		});
-            	});
               const resp = await fetch('/api/generate-registration-options/');
               // what is the response
               console.log("RESPONSE...: ",resp);
