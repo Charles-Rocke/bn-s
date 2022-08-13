@@ -32,7 +32,7 @@ from webauthn.helpers.structs import (
     RegistrationCredential,
     AuthenticationCredential,
 )
-from users.models import UserAccount
+from django_user.models import User
 from typing import Dict
 from django.http import JsonResponse
 #####################################################
