@@ -59,7 +59,7 @@ origin = "https://bn-s.charles-rocke.repl.co"
 def handler_generate_registration_options(request):
 	data_from_post = json.load(request)['post_data']
 	print(f"data: {data_from_post}")
-	user = User.objects.create_user(username="hello@mames.com")
+	user = User.objects.create_user(username=data_from_post)
 	
 	# generate registration options
 	# user.id must be a string for encoding
