@@ -39,7 +39,7 @@
         <script>
             const { startRegistration } = SimpleWebAuthnBrowser;
             function stopSubmit(event) {
-            event.preventDefault();
+            	event.preventDefault();
             }
 						$(document).ready(function(){
             		$("button").click(function(){
@@ -54,7 +54,7 @@
 			            	data: JSON.stringify({"post_data":signupValue})
 									});
             		});
-            	});
+            });
             // <button>
             const elemBegin = document.getElementById('btnBegin');
             // <span>/<p>/etc...
@@ -71,12 +71,15 @@
               // GET registration options from the endpoint that calls
               // @simplewebauthn/server -> generateRegistrationOptions()
             	// Get users value in input field
+							console.log("fetching /api/generate-registration-options/")
               const resp = await fetch('/api/generate-registration-options/');
+							console.log("fetched /api/generate-registration-options/")
               // what is the response
               console.log("RESPONSE...: ",resp);
               let attResp;
               try {
                 // Pass the options to the authenticator and wait for a response
+								console.log("trying to start registration")
                 attResp = await startRegistration(await resp.json());
               } catch (error) {
                 // Some basic error handling
@@ -119,6 +122,8 @@
             
         </script>
         <!-- End Registration Script -->
+
+		 
         <!-- Authentication Script -->
         <script>
             const { startAuthentication } = SimpleWebAuthnBrowser;

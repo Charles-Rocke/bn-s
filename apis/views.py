@@ -35,6 +35,7 @@ from webauthn.helpers.structs import (
 from django_user.models import User
 from typing import Dict
 from django.http import JsonResponse
+from django.http import HttpResponse
 #####################################################
 # for authenticating users
 from django.contrib.auth import authenticate
@@ -57,6 +58,7 @@ origin = "https://bn-s.charles-rocke.repl.co"
 @api_view(['GET', 'POST'])
 @never_cache
 def handler_generate_registration_options(request):
+	print("start of reg gen handler")
 	data_from_post = json.load(request)['post_data']
 	print(f"data: {data_from_post}")
 	user = User.objects.create_user(username=data_from_post)
@@ -98,15 +100,16 @@ def handler_generate_registration_options(request):
 	
 	#convert string to  object
 	print("JSON LOADS OPTIONS")
+	print(type(json.dumps(opts)))
 	json_opts = json.loads(opts)
 	print(json_opts)
 	print("FINISHED JSON LOADS")
 
 	print("PRINTING JSON OPTIONS")
-	print(Response(json_opts))
+	print(HttpResponse(json_opts))
 
 	print("RETURNING JSON OPTIONS")
-	return Response(json_opts)
+	return HttpResponse(json_opts)
 #########################################################
 
 # verify registration response
