@@ -7,7 +7,7 @@
 		 <!-- google jquery -->
 		 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
       <!-- simp webauthn -->
-      <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js" integrity="sha384-/Vdr3cY85sIGxO/nLSp5M+9Yxv50GnbPj5fn9I3+TKmE+ge6NUmkqzrLUxesdTeV" crossorigin="anonymous"></script>
+      <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js" integrity="sha384-R1piZIzUue2X/sCXiMO+qicDzhR0B8ZptZk2UQMger4pZ07lPAXKnTQvnN/A76eT" crossorigin="anonymous"></script>
       <!-- <script src="static/js/webauthn/authn.js"></script> -->
    </head>
    <body>
@@ -22,6 +22,7 @@
                   <a class="nav-link active" aria-current="page" href="{% url 'home' %}">Home</a>
                   <a class="nav-link" href="#"></a>
                   {% if user.is_authenticated %}
+								 <li class="nav-item"><a class="nav-link me-lg-3" href="#Authenticated">{{ user.username }}</a></li>
                   <a class="nav-link" href="{% url 'django_user:logout' %}">Sign out</a>
                   {% else %}
                   <a class="nav-link" href="{% url 'django_user:signup' %}">Sign up</a>
@@ -95,7 +96,7 @@
               // POST the response to the endpoint that calls
               // @simplewebauthn/server -> verifyRegistrationResponse()
             console.log("Fetching verify registration")
-              const verificationResp = await fetch('api/verify-registration-response/', {
+              const verificationResp = await fetch('/api/verify-registration-response/', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',

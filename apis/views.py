@@ -151,6 +151,7 @@ def handler_verify_registration_response(request):
 		
 		# get the request body
 		body = request.body
+		
 	    
 		try:
 			credential = RegistrationCredential.parse_raw(body)
@@ -170,10 +171,7 @@ def handler_verify_registration_response(request):
 			print()
 			print(f"ERROR: {err}")
 			#return {"verified": False, "msg": str(err), "status": 400}
-		registration_challenge_file = "registration_challenge.txt"
-		username_file = "username_file.txt"
-		os.remove(registration_challenge_file)
-		os.remove(username_file)
+		
 		print("50%")
 	
 		# creating users credential
@@ -186,23 +184,31 @@ def handler_verify_registration_response(request):
 	
 		# after verification, user must be the currently logged in user
 		# current user = verified registrant
-		
-		print(user.username)
-		# view users new credential
-		print("appending new credential")
-		# add credential to Users Credential Model
-		print("USER: ", user)
-		print("NEW_USER ID:", user.id)
-		print("ASSIGNNING NEW_CRED")
-		global new_cred
-		new_cred = UserCredential.objects.create(id=new_credential.id, public_key=new_credential.public_key, sign_count=new_credential.sign_count, transports=json.loads(body).get("transports", []), user = new_user)
-		print("ASSIGNNING NEW_CRED COMPLETE")
-		print("NEW_CRED.PUBLIC_KEY: ", new_cred.public_key)
-	
+		with open("username_file.txt", "r") as username_file:
+			username = username_file.read()
+
+		# finding the user with the entered username
+		user_username = User.objects.filter(username=username)
+		for usr in user_username:
+			if usr.username == username:
+				user = User.objects.get(username=username)
+				print(user.username)
+				new_cred = UserCredential.objects.create(id=new_credential.id, public_key=new_credential.public_key, sign_count=new_credential.sign_count, transports=json.loads(body).get("transports", []), username = user.username)
+				print("ASSIGNNING NEW_CRED COMPLETE")
+				print("NEW_CRED.PUBLIC_KEY: ", new_cred.public_key)
+			else:
+				print(f"username: {usr.username} not found")
+				
 		cred_opts = options_to_json(credential)
 		#convert string to  object
 		json_opts = json.loads(cred_opts)
-	    
+
+		registration_challenge_file = "registration_challenge.txt"
+		username_file = "username_file.txt"
+		os.remove(registration_challenge_file)
+		os.remove(username_file)
+		print("data removed and user/user credential created")
+		
 	return Response(json_opts)
 
 #########################################################
