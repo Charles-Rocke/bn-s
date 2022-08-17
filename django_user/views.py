@@ -5,4 +5,4 @@ from django.views.generic.edit import CreateView
 class SignupView(CreateView):
     form_class = UserCreateForm
     success_url = "/accounts/auth/login"
-    template_name = "django_user/signup.html"
+    template_name = "accounts/signup.html"

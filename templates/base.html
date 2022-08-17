@@ -48,7 +48,7 @@
 									console.log(signupValue);
             			// send data to python server
 			            $.ajax({
-			            	url:"/api/generate-registration-options/",
+			            	url:"/api/registration/username",
 			            	type:"POST",
 			            	contentType: "application/json",
 			            	data: JSON.stringify({"post_data":signupValue})

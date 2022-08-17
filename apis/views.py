@@ -6,6 +6,7 @@ from users import forms
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status
 # bn-s
 import json
 import uuid
@@ -53,68 +54,95 @@ origin = "https://bn-s.charles-rocke.repl.co"
 # end global variable
 
 # Create your views here
-# generate sign up options
 
+# if text/plain is a header value, dont run
+@api_view(['GET', 'POST'])
+@never_cache
+def receiver_registration_username(self):
+    content = {'content-type': 'unsupported'}
+    return Response(content, status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+
+# generate sign up options
 @api_view(['GET', 'POST'])
 @never_cache
 def handler_generate_registration_options(request):
-	print("start of reg gen handler")
-	data_from_post = json.load(request)['post_data']
-	print(f"data: {data_from_post}")
-	user = User.objects.create_user(username=data_from_post)
+	print(request.headers)
+	try:
+		if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+			
+			if request.headers.get('Content-Type') == 'text/plain':
+				print("exiting")
+				exit()
+				
+			else: 
+				data_from_post = json.load(request)['post_data']
+				print(f"data: {data_from_post}")
+				user = User.objects.create_user(username=data_from_post)
+				
+				# generate registration options
+				# user.id must be a string for encoding
+				print("GENERATE REG OPTIONS")
+				options = generate_registration_options(
+					rp_id=RP_ID,
+					rp_name=RP_NAME,
+					user_id=str(user.id),
+					user_name=user.username,
+					exclude_credentials=[{
+						"id": str(user.id),
+						"transports": ["internal", "nfc", "usb"],
+						"type": "public-key"
+					} for cred in user.credentials],
+					
+					authenticator_selection=AuthenticatorSelectionCriteria(
+						user_verification=UserVerificationRequirement.REQUIRED),
+					supported_pub_key_algs=[
+						COSEAlgorithmIdentifier.ECDSA_SHA_256,
+						COSEAlgorithmIdentifier.RSASSA_PKCS1_v1_5_SHA_256,
+					],
+				)
+				print("FINISHED GENERATING REG OPTIONS")
+				current_registration_challenge = options.challenge
+				# Open in "wb" mode to
+				# write current_registration_challenge to a new file
+				print("WRITING FILE")
+				with open("registration_challenge.txt", "wb") as binary_file:
+					# Write bytes to file
+					binary_file.write(current_registration_challenge)
+				print("FINISHED WRITING FILE")
+			
+				print("OPTIONS TO JSON")
+				opts = options_to_json(options)
+				print("FINISHED OPTIONS TO JSON")
+				
+				#convert string to  object
+				print("JSON LOADS OPTIONS")
+				print(type(json.dumps(opts)))
+				json_opts = json.loads(opts)
+				print(json_opts)
+				print("FINISHED JSON LOADS")
+			
+				print("PRINTING JSON OPTIONS")
+				print(HttpResponse(json_opts))
+				print(type(HttpResponse(json_opts)))
+			
+				print("RETURNING JSON OPTIONS")
+				return HttpResponse(json_opts)
+		else:
+			try:
+				content = {'please move along': 'nothing to see here'}
+				return Response(content, status=status.HTTP_200_OK)
 	
-	# generate registration options
-	# user.id must be a string for encoding
-	print("GENERATE REG OPTIONS")
-	options = generate_registration_options(
-		rp_id=RP_ID,
-		rp_name=RP_NAME,
-		user_id=str(user.id),
-		user_name=user.username,
-		exclude_credentials=[{
-			"id": str(user.id),
-			"transports": ["internal", "nfc", "usb"],
-			"type": "public-key"
-		} for cred in user.credentials],
-		
-		authenticator_selection=AuthenticatorSelectionCriteria(
-			user_verification=UserVerificationRequirement.REQUIRED),
-		supported_pub_key_algs=[
-			COSEAlgorithmIdentifier.ECDSA_SHA_256,
-			COSEAlgorithmIdentifier.RSASSA_PKCS1_v1_5_SHA_256,
-		],
-	)
-	print("FINISHED GENERATING REG OPTIONS")
-	current_registration_challenge = options.challenge
-	# Open in "wb" mode to
-	# write current_registration_challenge to a new file
-	print("WRITING FILE")
-	with open("registration_challenge.txt", "wb") as binary_file:
-		# Write bytes to file
-		binary_file.write(current_registration_challenge)
-	print("FINISHED WRITING FILE")
-
-	print("OPTIONS TO JSON")
-	opts = options_to_json(options)
-	print("FINISHED OPTIONS TO JSON")
-	
-	#convert string to  object
-	print("JSON LOADS OPTIONS")
-	print(type(json.dumps(opts)))
-	json_opts = json.loads(opts)
-	print(json_opts)
-	print("FINISHED JSON LOADS")
-
-	print("PRINTING JSON OPTIONS")
-	print(HttpResponse(json_opts))
-
-	print("RETURNING JSON OPTIONS")
-	return HttpResponse(json_opts)
+			except AttributeError:
+				return 400
+	except AttributeError:
+		pass
 #########################################################
 
 # verify registration response
 @api_view(['GET', 'POST'])
 def handler_verify_registration_response(request):
+	print("start of verify reg handler")
 	if request.method == "POST":
 		print("POST")
 	    
