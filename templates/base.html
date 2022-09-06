@@ -37,25 +37,27 @@
         </div>
         <!-------------------------------------------------------->
         <!-- Registration Script-->
-        <script>
-            const { startRegistration } = SimpleWebAuthnBrowser;
-            function stopSubmit(event) {
+		 		<script>
+					function stopSubmit(event) {
             	event.preventDefault();
             }
 						$(document).ready(function(){
-            		$("button").click(function(){
+            		$("#btnBegin").click(function(){
             			console.log("b clicked")
             			var signupValue=$("input:text").val();
 									console.log(signupValue);
             			// send data to python server
 			            $.ajax({
-			            	url:"/api/registration/username",
+			            	url:"/api/registration/signup",
 			            	type:"POST",
 			            	contentType: "application/json",
 			            	data: JSON.stringify({"post_data":signupValue})
 									});
             		});
             });
+				</script>
+        <script defer>
+            const { startRegistration } = SimpleWebAuthnBrowser;
             // <button>
             const elemBegin = document.getElementById('btnBegin');
             // <span>/<p>/etc...
@@ -122,11 +124,30 @@
             });
             
         </script>
-        <!-- End Registration Script -->
+        <!-------------- End Registration Script ------------------>
 
 		 
-        <!-- Authentication Script -->
-        <script>
+        <!------------- Authentication Script --------------------->
+	 			<script>
+					function stopSubmit(event) {
+            	event.preventDefault();
+            }
+						$(document).ready(function(){
+            		$("#btnBeginAuth").click(function(){
+            			console.log("btnBeginAuth clicked")
+            			var loginValue=$("input:text").val();
+									console.log(loginValue);
+            			// send data to python server
+			            $.ajax({
+			            	url:"/api/registration/login",
+			            	type:"POST",
+			            	contentType: "application/json",
+			            	data: JSON.stringify({"post_data":loginValue})
+									});
+            		});
+            });
+				</script>
+        <script defer type="module">
             const { startAuthentication } = SimpleWebAuthnBrowser;
             
             // <button>
@@ -138,7 +159,7 @@
             
               // GET authentication options from the endpoint that calls
               // @simplewebauthn/server -> generateAuthenticationOptions()
-              const authResp = await fetch('api/generate-authentication-options/');
+              const authResp = await fetch('/api/generate-authentication-options/');
             	console.log("fetching authentication");
               let asseResp;
               try {
@@ -152,7 +173,7 @@
             
               // POST the response to the endpoint that calls
               // @simplewebauthn/server -> verifyAuthenticationResponse()
-              const authverificationResp = await fetch('api/verify-authentication/', {
+              const authverificationResp = await fetch('/api/verify-authentication/', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',

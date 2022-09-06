@@ -1,9 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
-<form action="{% url 'django_user:login' %}" method="post">
+<div id="success"></div>
+<div id="error"></div>
+<div>
     {% csrf_token %}
     {{ form }}
-    <input type="submit" value="Submit">
-</form>
+    <button type="submit" class="btn btn-primary" id="btnBeginAuth">Login</button>
+</div>
 
 {% endblock content %}

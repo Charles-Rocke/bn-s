@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     # local
     'apis.apps.ApisConfig',
     'users.apps.UsersConfig',
-    'django_user',
+    'django_user.apps.DjangoUserConfig',
 ]
 
 # auth user model

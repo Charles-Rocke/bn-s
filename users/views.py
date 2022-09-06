@@ -17,3 +17,6 @@ class HomePageView(TemplateView):
 class UserView(ListView):
 	model = get_user_model()
 	template_name = "users/auth.html"
+
+class PortalHomeView(TemplateView):
+	template_name = "users/portal/home.html"

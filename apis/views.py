@@ -1,20 +1,18 @@
 import os
-# from users app
-from users import forms
-# end users app imports
+import sys
 # bn-s
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 # getting the name of registration username file
-from varname.helpers import Wrapper
+
+# getting correct user
+from django.shortcuts import get_object_or_404
+
 
 # bn-s
 import json
-import uuid
-# for decoded byte dictionary
-import ast
 
 from webauthn import (
     base64url_to_bytes,
@@ -37,8 +35,7 @@ from webauthn.helpers.structs import (
     AuthenticationCredential,
 )
 from django_user.models import UserCredential
-from typing import Dict
-from django.http import JsonResponse
+
 from django.http import HttpResponse
 #####################################################
 # for authenticating users
@@ -54,7 +51,10 @@ RP_NAME = 'charles-rocke'
 origin = "https://bn-s.charles-rocke.repl.co"
 # A simple way to persist credentials by user ID
 
-# end global variable
+# delete below 
+#__location__ = os.path.realpath(
+#    os.path.join(os.getcwd(), os.path.dirname(__file__)))
+# end delete
 
 # Create your views here
 
@@ -62,7 +62,7 @@ origin = "https://bn-s.charles-rocke.repl.co"
 # if text/plain is a header value, dont run
 @api_view(['GET', 'POST'])
 @never_cache
-def receiver_registration_username(request):
+def receiver_registration_signup(request):
 	if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
 		registration_username = json.load(request)['post_data']
 		print(f"data: {registration_username}")
@@ -70,7 +70,7 @@ def receiver_registration_username(request):
 		# Open in "wb" mode to
 		# write users registration name to a new file
 		print("WRITING FILE")
-		with open("username_file.txt", "w") as username_file:
+		with open("/home/runner/bn-s/apis/username_file.txt", "w") as username_file:
 			# Write bytes to file
 			username_file.write(registration_username)
 		print("FINISHED WRITING FILE")
@@ -83,13 +83,16 @@ def receiver_registration_username(request):
 @api_view(['GET', 'POST'])
 @never_cache
 def handler_generate_registration_options(request):
+	
 	# read users registered name from registration_username file
-	with open("username_file.txt", "r") as username_file:
+	print("opening")
+	with open("/home/runner/bn-s/apis/username_file.txt", "r") as username_file:
 		username = username_file.read()
-		print(username)
+		print(f"username: {username}")
 		if username:
 			user = User.objects.create(username = username)
-		
+			user1 = get_object_or_404(User, username=username)
+			print("user1:", user1)
 	# generate registration options
 	# user.id must be a string for encoding
 	print("GENERATE REG OPTIONS")
@@ -184,27 +187,24 @@ def handler_verify_registration_response(request):
 	
 		# after verification, user must be the currently logged in user
 		# current user = verified registrant
-		with open("username_file.txt", "r") as username_file:
+		with open("/home/runner/bn-s/apis/signup_username_file.txt", "r") as username_file:
 			username = username_file.read()
+			print(username)
 
 		# finding the user with the entered username
-		user_username = User.objects.filter(username=username)
-		for usr in user_username:
-			if usr.username == username:
-				user = User.objects.get(username=username)
-				print(user.username)
-				new_cred = UserCredential.objects.create(id=new_credential.id, public_key=new_credential.public_key, sign_count=new_credential.sign_count, transports=json.loads(body).get("transports", []), username = user.username)
-				print("ASSIGNNING NEW_CRED COMPLETE")
-				print("NEW_CRED.PUBLIC_KEY: ", new_cred.public_key)
-			else:
-				print(f"username: {usr.username} not found")
+		print("user or 404")
+		user = get_object_or_404(User, username=username)
+		print("user: ", user)
+		new_cred = UserCredential.objects.create(id=new_credential.id, public_key=new_credential.public_key, sign_count=new_credential.sign_count, transports=json.loads(body).get("transports", []), username = user)
+		print("ASSIGNNING NEW_CRED COMPLETE")
+		print("NEW_CRED.PUBLIC_KEY: ", new_cred.public_key)
 				
 		cred_opts = options_to_json(credential)
 		#convert string to  object
 		json_opts = json.loads(cred_opts)
 
 		registration_challenge_file = "registration_challenge.txt"
-		username_file = "username_file.txt"
+		username_file = "/home/runner/bn-s/apis/username_file.txt"
 		os.remove(registration_challenge_file)
 		os.remove(username_file)
 		print("data removed and user/user credential created")
@@ -212,14 +212,49 @@ def handler_verify_registration_response(request):
 	return Response(json_opts)
 
 #########################################################
+# end registration 
+
+
+# start authentication
+#########################################################
+
+@api_view(['GET', 'POST'])
+@never_cache
+def receiver_registration_login(request):
+	if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+		registration_username = json.load(request)['post_data']
+		print(f"data: {registration_username}")
+
+		# Open in "wb" mode to
+		# write users registration name to a new file
+		print("WRITING FILE")
+		with open("/home/runner/bn-s/apis/login_username_file.txt", "w") as login_file:
+			# Write bytes to file
+			login_file.write(registration_username)
+		print("FINISHED WRITING FILE")
+
+		# return the binary filename
+		return Response(status=status.HTTP_200_OK)
+
+
 # generate authentication options
 @api_view(['GET', 'POST'])
 def handler_generate_authentication_options(requests):
-	global current_authentication_challenge
-	global logged_in_user_id
 	
-	# current user
-	user = in_memory_db[logged_in_user_id]
+	# read users login username from registration_login file
+	print("opening")
+	with open("/home/runner/bn-s/apis/login_username_file.txt", "r") as username_file:
+		username = username_file.read()
+		print(f"username: {username}")
+		# if username is found in the file
+		if username:
+			# check if username is in database
+			if User.objects.filter(username=username):
+				
+				user = User.objects(username = username)
+				print(f"username: {user.username}")
+	
+	# global current_authentication_challenge
 
 	# generating authentication options
 	options = generate_authentication_options(
