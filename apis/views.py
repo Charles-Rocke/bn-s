@@ -70,7 +70,7 @@ def receiver_registration_signup(request):
 		# Open in "wb" mode to
 		# write users registration name to a new file
 		print("WRITING FILE")
-		with open("/home/runner/bn-s/apis/username_file.txt", "w") as username_file:
+		with open("/home/runner/bn-s/apis/signup_username_file.txt", "w") as username_file:
 			# Write bytes to file
 			username_file.write(registration_username)
 		print("FINISHED WRITING FILE")
@@ -86,7 +86,7 @@ def handler_generate_registration_options(request):
 	
 	# read users registered name from registration_username file
 	print("opening")
-	with open("/home/runner/bn-s/apis/username_file.txt", "r") as username_file:
+	with open("/home/runner/bn-s/apis/signup_username_file.txt", "r") as username_file:
 		username = username_file.read()
 		print(f"username: {username}")
 		if username:
@@ -204,7 +204,7 @@ def handler_verify_registration_response(request):
 		json_opts = json.loads(cred_opts)
 
 		registration_challenge_file = "registration_challenge.txt"
-		username_file = "/home/runner/bn-s/apis/username_file.txt"
+		username_file = "/home/runner/bn-s/apis/signup_username_file.txt"
 		os.remove(registration_challenge_file)
 		os.remove(username_file)
 		print("data removed and user/user credential created")
@@ -251,7 +251,7 @@ def handler_generate_authentication_options(requests):
 			# check if username is in database
 			if User.objects.filter(username=username):
 				
-				user = User.objects(username = username)
+				user = User.objects.get(username = username)
 				print(f"username: {user.username}")
 	
 	# global current_authentication_challenge
