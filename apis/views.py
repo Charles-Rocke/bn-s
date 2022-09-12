@@ -198,7 +198,17 @@ def handler_verify_registration_response(request):
 		new_cred = UserCredential.objects.create(id=new_credential.id, public_key=new_credential.public_key, sign_count=new_credential.sign_count, transports=json.loads(body).get("transports", []), username = user)
 		print("ASSIGNNING NEW_CRED COMPLETE")
 		print("NEW_CRED.PUBLIC_KEY: ", new_cred.public_key)
-				
+		print("NEW_CRED.ID: ", new_cred.id)
+		
+		# assign new credential to user
+		print(f"USER.CREDENTIALS1: {user.credentials}")
+		user = User.objects.get(username= username)
+		user.credentials = new_cred
+		print(f"USER.CREDENTIALS2: {user.credentials}")
+		# set credential attribute for user
+		print(user.username)
+		setattr(user, 'credential', new_credential)
+		user.save()
 		cred_opts = options_to_json(credential)
 		#convert string to  object
 		json_opts = json.loads(cred_opts)
@@ -252,8 +262,9 @@ def handler_generate_authentication_options(requests):
 			if User.objects.filter(username=username):
 				
 				user = User.objects.get(username = username)
+				print(f"USER.CREDENTIALS: {user.credentials}")
 				print(f"username: {user.username}")
-	
+				user_cred = UserCredential()
 	# global current_authentication_challenge
 
 	# generating authentication options
@@ -261,8 +272,8 @@ def handler_generate_authentication_options(requests):
         rp_id=RP_ID,
         allow_credentials=[{
             "type": "public-key",
-            "id": cred.id,
-            "transports": cred.transports
+            "id": user_cred.credential_id,
+            "transports": ['internal', 'nfc', 'ble', 'usb', 'cable']
         } for cred in user.credentials],
         user_verification=UserVerificationRequirement.REQUIRED,
     )
