@@ -165,7 +165,10 @@
               let asseResp;
               try {
                 // Pass the options to the authenticator and wait for a response
-                asseResp = await startAuthentication(await authResp.json());
+                const opts = await authResp.json();
+								console.log(opts); // DEBUG: make sure things look okay
+								asseResp = await startAuthentication(opts);
+								console.log("fetched authentication");
               } catch (error) {
                 // Some basic error handling
                 console.log("error");

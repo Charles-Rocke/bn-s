@@ -203,11 +203,10 @@ def handler_verify_registration_response(request):
 		# assign new credential to user
 		print(f"USER.CREDENTIALS1: {user.credentials}")
 		user = User.objects.get(username= username)
-		user.credentials = new_cred
 		print(f"USER.CREDENTIALS2: {user.credentials}")
 		# set credential attribute for user
 		print(user.username)
-		setattr(user, 'credential', new_credential)
+		setattr(user, 'credentials', str(new_credential))
 		user.save()
 		cred_opts = options_to_json(credential)
 		#convert string to  object
@@ -273,7 +272,7 @@ def handler_generate_authentication_options(requests):
         allow_credentials=[{
             "type": "public-key",
             "id": user_cred.credential_id,
-            "transports": ['internal', 'nfc', 'ble', 'usb', 'cable']
+            "transports": ['internal', 'nfc', 'ble', 'usb']
         } for cred in user.credentials],
         user_verification=UserVerificationRequirement.REQUIRED,
     )
