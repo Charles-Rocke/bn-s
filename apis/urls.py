@@ -8,7 +8,7 @@ urlpatterns = [
 	path("verify-registration-response/", apis.views.handler_verify_registration_response, name = "verify_options"),
   path("generate-registration-options/", apis.views.handler_generate_registration_options, name = "generate_options"),
 	path("registration/signup", apis.views.receiver_registration_signup, name = "registration_signup"),
-	path("registration/login", apis.views.receiver_registration_login, name = "registration_login"),
+	path("authentication/login", apis.views.receiver_authentication_login, name = "registration_login"),
 ]
 
 

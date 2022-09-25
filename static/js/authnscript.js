@@ -45,22 +45,15 @@ function getFailureStatus(message) {
  * Register Button
  */
 document
-  .getElementById("btnRegister")
+  .getElementById("btnBegin")
   .addEventListener("click", async () => {
-    resetStatus(statusRegister);
-    resetDebug(dbgRegister);
 
     // Get options
-	console.log("getting options (sripts.js)")
+		console.log("getting options (sripts.js)")
     const resp = await fetch("/generate-registration-options");
 	  console.log("RESP response: ",resp);
     const opts = await resp.json();
-	console.log("recieved registration response (scripts.js)");
-    printToDebug(
-      dbgRegister,
-      "Registration Options",
-      JSON.stringify(opts, null, 2)
-    );
+		console.log("recieved registration response (scripts.js)");
 
     // Start WebAuthn Registration
     let regResp;
@@ -68,19 +61,21 @@ document
 	  console.log("awaitingting startRegistration (scripts.js)");
       regResp = await startRegistration(opts);
 	  console.log("recieved startRegistration(opts) (scripts.js)");
-      printToDebug(
-        dbgRegister,
-        "Registration Response",
-        JSON.stringify(regResp, null, 2)
-      );
-    } catch (err) {
-      printToStatus(statusRegister, getFailureStatus(err));
-      throw new Error(err);
-    }
+      
+    } catch (error) {
+				// Some basic error handling
+				if (error.name === 'InvalidStateError') {
+					elemError.innerText = 'Error: Authenticator was probably already registered by user';
+				} else {
+					elemError.innerText = error;
+				}
+		
+				throw error;
+			}
 
     // Send response to server
     const verificationResp = await fetch(
-      "/verify-registration-response",
+      "/api/verify-registration-response/'",
       {
         method: "POST",
         headers: {
@@ -95,15 +90,11 @@ document
     const { verified, msg } = verificationRespJSON;
 	
     if (verified) {
-      printToStatus(statusRegister, getPassStatus());
+      console.log("registration verified");
     } else {
-      printToStatus(statusRegister, getFailureStatus(err));
+      console.log("registration not verified");
     }
-    printToDebug(
-      dbgRegister,
-      "Verification Response",
-      JSON.stringify(verificationRespJSON, null, 2)
-    );
+    
 	// send data to python server
 	$.ajax({
 		url:"/registration",
@@ -119,40 +110,37 @@ document
 	}
   });
 
+
 /**
  * Authenticate Button
  */
 document
-  .getElementById("btnAuthenticate")
+  .getElementById("btnBeginAuth")
   .addEventListener("click", async () => {
-    resetStatus(statusAuthenticate);
-    resetDebug(dbgAuthenticate);
+    $.ajax({
+			url:"/api/authentication/login",
+			type:"POST",
+			contentType: "application/json",
+			data: JSON.stringify({"post_data":loginValue})
+		});
 
     // Get options
-    const resp = await fetch("/generate-authentication-options");
+    const resp = await fetch("/api/generate-authentication-options/");
     const opts = await resp.json();
-    printToDebug(
-      dbgAuthenticate,
-      "Authentication Options",
-      JSON.stringify(opts, null, 2)
-    );
 
     // Start WebAuthn Authentication
     let authResp;
     try {
-		// begin bug
-		/* bug - incredibly long wait on random devices */
-		console.log("Starting Authentication")
-      authResp = await startAuthentication(opts);
-	  console.log("finished Authentication")
-		console.log(authResp);
-      printToDebug(
-        dbgAuthenticate,
-        "Authentication Response",
-        JSON.stringify(authResp, null, 2)
-      ); // end bug
+			// begin bug
+			/* bug - incredibly long wait on random devices */
+			console.log("Starting Authentication")
+			const opts = await authResp.json();
+			console.log(opts); // DEBUG: make sure things look okay
+			asseResp = await startAuthentication(opts);
+		  console.log("finished Authentication")
+			console.log(authResp);
     } catch (err) {
-      printToStatus(statusAuthenticate, getFailureStatus(err));
+      console.log("error");
       throw new Error(err);
     }
 
@@ -160,7 +148,7 @@ document
 		console.log("fetching verification response");
     // Send response to server
     const verificationResp = await fetch(
-      "/verify-authentication-response",
+      "/api/verify-authentication/",
       {
         method: "POST",
         headers: {
@@ -177,30 +165,26 @@ document
     const verificationRespJSON = await verificationResp.json();
     const { verified, msg } = verificationRespJSON;
     if (verified) {
-      printToStatus(statusAuthenticate, getPassStatus());
+      console.log("authentication verified");
     } else {
-      printToStatus(statusAuthenticate, getFailureStatus(err));
+      console.log("authentication not verified");
     }
-    printToDebug(
-      dbgAuthenticate,
-      "Verification Response",
-      JSON.stringify(verificationRespJSON, null, 2)
-    );
+
 	  // debugging
 		console.log("checked verification response")
 	  // debugging
 		console.log("ajax POST request")
 	// send data to python server
-	$.ajax({
-		url:"/auth",
-		type:"POST",
-		contentType: "application/json",
-		data: JSON.stringify(verificationRespJSON)});
-	// if verificationRespJSON property value == true => redirect to logged in screen
-	// else verification not valid
-	if (verified == true){
-		window.location = "/welcome_back";
-	} else{
-		console.log("Something went wrong");
-	}
+		$.ajax({
+			url:"/auth",
+			type:"POST",
+			contentType: "application/json",
+			data: JSON.stringify(verificationRespJSON)});
+		// if verificationRespJSON property value == true => redirect to logged in screen
+		// else verification not valid
+		if (verified == true){
+			window.location = "/welcome_back";
+		} else{
+			console.log("Something went wrong");
+		}
   });
