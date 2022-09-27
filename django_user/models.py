@@ -3,12 +3,12 @@ from django.db import models
 from uuid import uuid4
 from django.contrib.auth.models import AbstractUser
 
+
 # Create your models here
 # specific user
 class User(AbstractUser):
 	id = models.UUIDField(primary_key=True, default=uuid4, editable=False, unique = True)
 	username = models.CharField(max_length = 50, unique = True)
-	credentials = models.JSONField(default = {"credential":"credential_value"})
 
 	def __str__(self):
 		return self.username
@@ -20,7 +20,7 @@ class UserCredential(models.Model):
 	public_key = models.BinaryField()
 	sign_count = models.PositiveBigIntegerField()
 	transports = models.CharField(max_length=20)
-	username = models.ForeignKey(
+	User = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )

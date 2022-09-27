@@ -34,14 +34,10 @@ from webauthn.helpers.structs import (
     RegistrationCredential,
     AuthenticationCredential,
 )
-from django_user.models import UserCredential
+from django_user.models import User, UserCredential
 
 from django.http import HttpResponse
-#####################################################
-# for authenticating users
-from django_user.models import User
 
-from django.contrib.auth import get_user_model
 
 
 #####################################################
@@ -85,14 +81,13 @@ def receiver_registration_signup(request):
 def handler_generate_registration_options(request):
 	
 	# read users registered name from registration_username file
-	print("opening")
+	print("IN GENERATE REG OPTIONS")
 	with open("/home/runner/bn-s/apis/signup_username_file.txt", "r") as username_file:
 		username = username_file.read()
 		print(f"username: {username}")
 		if username:
 			user = User.objects.create(username = username)
-			user1 = get_object_or_404(User, username=username)
-			print("user1:", user1)
+			print(user.username)
 	# generate registration options
 	# user.id must be a string for encoding
 	print("GENERATE REG OPTIONS")
@@ -101,10 +96,6 @@ def handler_generate_registration_options(request):
 		rp_name=RP_NAME,
 		user_id=str(user.id),
 		user_name=user.username,
-		exclude_credentials=[{
-			"id": str(user.id),
-			"type": "public-key"
-		} for cred in user.credentials],
 		
 		authenticator_selection=AuthenticatorSelectionCriteria(
 			user_verification=UserVerificationRequirement.REQUIRED),
@@ -197,18 +188,15 @@ def handler_verify_registration_response(request):
 		credentialz = UserCredential.objects.create(id=new_credential.id, 
 																			public_key=new_credential.public_key, 
 																			sign_count=new_credential.sign_count, 
-																			transports=json.loads(body).get("transports", []), username = User.objects.get(username= username)
-																			)
-		print(credentialz.username.credentials)
+																			transports=json.loads(body).get("transports", []), User = User.objects.get(username= username))
 		user = User.objects.get(username= username)
-		print(f"USER.CREDENTIALS2: {user.credentials}")
+		
 		
 		# set credential attribute for user
 		print(user.username)
 		#setattr(user, ['credentials', str(credential.id))
-		user.credentials = {"credential": credentialz.id.decode('latin-1')}
-		user.save()
-		print(f"USER.CREDENTIALS2: {user.credentials}")
+		
+		
 		cred_opts = options_to_json(credential)
 		
 		#convert string to  object
@@ -255,28 +243,31 @@ def handler_generate_authentication_options(requests):
 	# read users login username from registration_login file
 	print("opening")
 	with open("/home/runner/bn-s/apis/login_username_file.txt", "r") as username_file:
+		print(f"username getting")
 		username = username_file.read()
+		print(f"username got")
 		# if username is found in the file
 		if username:
+			print(f"username")
 			# check if username is in database
 			if User.objects.filter(username=username):
-				
-				user = User.objects.get(username = username)
-				credential_id = User.objects.filter(credentials__credential='ê®4û\x912ãµV#\x1d\x99\x81\x0e=¶Ì8\x13é').values()
+				print(f"username filtered")
+
+				user = User.objects.get(username=username)
 				print(f"username: {user.username}")
 				
 	# global current_authentication_challenge
-
 	# generating authentication options
+				print
 	options = generate_authentication_options(
         rp_id=RP_ID,
         allow_credentials=[{
             "type": "public-key",
-            "id": credential_id,
-        } for cred in user.credentials],
+            "id": bytes(str(user.id), "utf-8"),
+        }],
         user_verification=UserVerificationRequirement.REQUIRED,
     )
-	
+	print("created options")
 	# getting current auth challenge
 	current_authentication_challenge = options.challenge
 
