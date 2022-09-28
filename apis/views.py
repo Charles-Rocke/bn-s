@@ -168,27 +168,24 @@ def handler_verify_registration_response(request):
 		
 		print("50%")
 		print("verification.credential_id:", verification.credential_id)
-	
+
+		with open("/home/runner/bn-s/apis/signup_username_file.txt", "r") as username_file:
+			username = username_file.read()
+			print(username)
+			
+		user = User.objects.get(username= username)
 		# creating users credential
 		new_credential = UserCredential(
 			id=verification.credential_id,
 			public_key=verification.credential_public_key,
 			sign_count=verification.sign_count,
 			transports=json.loads(body).get("transports", []),
+			User = user
 		)
-	
-		# after verification, user must be the currently logged in user
-		# current user = verified registrant
-		with open("/home/runner/bn-s/apis/signup_username_file.txt", "r") as username_file:
-			username = username_file.read()
-			print(username)
+		new_credential.save()
 
-		# finding the user with the entered username
-		print("new_credential.id:", new_credential.id)
-		credentialz = UserCredential.objects.create(id=new_credential.id, 
-																			public_key=new_credential.public_key, 
-																			sign_count=new_credential.sign_count, 
-																			transports=json.loads(body).get("transports", []), User = User.objects.get(username= username))
+		print(request.user)
+		
 		user = User.objects.get(username= username)
 		
 		
